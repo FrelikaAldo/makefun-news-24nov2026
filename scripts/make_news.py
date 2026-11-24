@@ -3,7 +3,9 @@
 make_news.py — a newspaper front page for the world's news of Tuesday 24 November 2026.
 
 Brief 1 (this pass): the page skeleton. Paper, masthead, date bar, kicker, the lead band with a
-placeholder illustration panel, the 3x2 brief grid with placeholder pictogram slots, the footer.
+placeholder illustration panel, the brief grid with placeholder pictogram slots, the footer.
+Brief 5: the OIL cell is gone and the brief runs five cells — three across the top, two wider across
+the foot — with MORNING EDITION / ONE DAY, ONE PAGE as the kicker.
 
 Two hooks are deliberately left empty for brief 2:
     draw_lead_panel(box)      -> the Strait of Hormuz illustration, 960x228
@@ -62,13 +64,15 @@ LEAD_L1_BASE = 521
 LEAD_L2_BASE = 569
 LEAD_SF_BASE = 591
 
-# grid geometry
+# grid geometry — a newspaper two-row brief: three cells across the top, two wider across the foot
 GRID_TOP = 606
-COLS, ROWS = 3, 2
 GUTTER = 20
-CELL_W = 306                         # 3*306 + 2*20 = 958, so the grid sits 1 px inside each side
 CELL_H = 140
-GRID_X0 = X0 + (CONTENT_W - (COLS * CELL_W + (COLS - 1) * GUTTER)) // 2
+TOP_COLS = 3
+TOP_CELL_W = 306                     # 3*306 + 2*20 = 958, so the top row sits 1 px inside each side
+BOT_COLS = 2
+BOT_CELL_W = (CONTENT_W - GUTTER) // BOT_COLS   # 470 — half the content width less the gutter
+GRID_X0 = X0 + (CONTENT_W - (TOP_COLS * TOP_CELL_W + (TOP_COLS - 1) * GUTTER)) // 2
 
 # inside a cell
 ICON = 54
@@ -124,7 +128,7 @@ def font(path, size, weight=None, opsz=None):
 
 
 # --------------------------------------------------------------------------------------------
-# the day's news — one list, eight stories, six regions
+# the day's news — one list, seven stories, five fields
 # --------------------------------------------------------------------------------------------
 
 STORIES = [
@@ -142,7 +146,7 @@ STORIES = [
         "icon": "hormuz",
         "label": ("Bessent says the sanctions bite; a Saudi-led coalition downs a Houthi drone",),
     },
-    # --- the 3x2 brief grid: one cell per field ---
+    # --- the two-row brief grid: three across the top, two wider across the foot ---
     {
         "slot": "grid",
         "tag": "UNITED NATIONS",
@@ -169,12 +173,6 @@ STORIES = [
     },
     {
         "slot": "grid",
-        "tag": "OIL",
-        "icon": "oil",
-        "label": ("CRUDE RISES AS", "HORMUZ STAYS SHUT"),
-    },
-    {
-        "slot": "grid",
         "tag": "SKY",
         "icon": "moon",
         "label": ("FIRST OF THREE", "SUPERMOONS TONIGHT"),
@@ -185,10 +183,10 @@ GRID_STORIES = [s for s in STORIES if s["slot"] == "grid"]
 LEAD_STORY = next(s for s in STORIES if s["slot"] == "lead")
 SF_STORY = next(s for s in STORIES if s["slot"] == "standfirst")
 
-KICKER_LEFT = "SEVEN STORIES  ·  SIX FIELDS"
-KICKER_RIGHT = "PAGE ONE"
+KICKER_LEFT = "MORNING EDITION"
+KICKER_RIGHT = "ONE DAY, ONE PAGE"
 FOOT_LINE = "Tuesday's news, drawn by an AI agent for make.fun"
-FOOT_BAR_TEXT = "SEVEN STORIES  ·  SIX FIELDS  ·  TUESDAY 24 NOVEMBER 2026"
+FOOT_BAR_TEXT = "THE WORLD TODAY  ·  TUESDAY 24 NOVEMBER 2026  ·  DRAWN BY AN AI AGENT FOR make.fun"
 DATE_TEXT = "TUESDAY 24 NOVEMBER 2026"
 MASTHEAD = "THE WORLD TODAY"
 
@@ -487,21 +485,50 @@ def draw_lead_panel(box=None):
 
 
 # --------------------------------------------------------------------------------------------
-# the six pictograms — 54x54, 2 px of air inside the box, one system
+# the five pictograms — 54x54, 2 px of air inside the box, one system
 # --------------------------------------------------------------------------------------------
 
+def _ell_arc(p, cx, cy, rx, ry, a0, a1, w=STROKE_MAIN, fill=INK_RGBA):
+    """
+    Elliptical arc on the 4x scratch canvas.
+
+    Pen.arc only takes a single radius, and a globe's latitude lines are ellipses, not circles, so
+    this mirrors Pen._box / Pen._w with a separate rx and ry. Angles are Pillow's: 0 at 3 o'clock,
+    increasing clockwise (y grows down).
+    """
+    s = p.s
+    box = [(cx - rx) * s, (cy - ry) * s, (cx + rx) * s - 1, (cy + ry) * s - 1]
+    p.d.arc(box, a0, a1, fill=fill, width=max(1, int(round(float(w) * s))))
+
+
+def _star(p, cx, cy, r_out, r_in=None, fill=ACCENT_RGBA):
+    """A filled five-pointed star, one point up: ten vertices alternating outer and inner radius."""
+    r_in = r_out * 0.382 if r_in is None else r_in
+    pts = []
+    for i in range(10):
+        rad = math.radians(-90.0 + i * 36.0)
+        r = r_out if i % 2 == 0 else r_in
+        pts.append((cx + r * math.cos(rad), cy + r * math.sin(rad)))
+    p.poly(pts, fill=fill)
+
+
 def _icon_unsc(p):
-    """The Security Council: a horseshoe table from above, six seats, and an antenna mark."""
-    cx, cy = 27.0, 28.0
-    p.arc(cx, cy, 15.0, 120, 60, w=7.0)                      # the table, open at the front
-    for a in (130, 170, 210, 250, 290, 330):
-        rad = math.radians(a)
-        p.dot(cx + 21.0 * math.cos(rad), cy + 21.0 * math.sin(rad), 3.0)
-    # the antenna, a small mark in the top corner — deliberately not the centre of the icon
-    p.line([(44.0, 16.5), (44.0, 9.5)], w=2.0)
-    p.dot(44.0, 7.5, 1.8)
-    p.line([(41.5, 13.0), (39.5, 11.5)], w=STROKE_SECOND)
-    p.line([(46.5, 13.0), (48.5, 11.5)], w=STROKE_SECOND)
+    """
+    The Security Council: a wireframe globe — the 40 px outline, two elliptical latitude arcs and
+    one vertical meridian, all 3 px ink — plus a small antenna mast outside the top-right rim, so
+    the mark still says technology rather than geography.
+    """
+    cx, cy, r = 27.0, 27.0, 20.0
+    p.ellipse(cx, cy, r, r, outline=INK_RGBA, w=STROKE_MAIN)        # the 40 px circle outline
+    _ell_arc(p, cx, cy - 8.0, r, 5.5, 0, 180)                       # latitude, upper third
+    _ell_arc(p, cx, cy + 8.0, r, 5.5, 0, 180)                       # latitude, lower third
+    p.ellipse(cx, cy, 8.0, r, outline=INK_RGBA, w=STROKE_MAIN)      # the vertical meridian
+
+    # the antenna: a mast, two short elements and a cap — clear of the rim at top right
+    p.line([(46.5, 14.0), (46.5, 4.0)], w=2.0)                      # the mast
+    p.dot(46.5, 3.0, 1.3)                                           # the cap
+    p.line([(43.5, 7.0), (49.5, 7.0)], w=2.0)                       # element, upper
+    p.line([(44.5, 10.0), (48.5, 10.0)], w=2.0)                     # element, lower
 
 
 def _icon_addis(p):
@@ -523,37 +550,24 @@ def _icon_planes(p):
 
 
 def _icon_eu(p):
-    """Strasbourg: the hemicycle — three concentric arcs of seats and the front bench."""
-    cx, cy = 27.0, 35.0
-    for r, n in ((10.0, 5), (16.0, 7), (22.0, 9)):
-        p.arc(cx, cy, r, 180, 360, w=STROKE_SECOND)
-        step = 170.0 / (n - 1)
-        for i in range(n):
-            rad = math.radians(185.0 + i * step)
-            p.dot(cx + r * math.cos(rad), cy + r * math.sin(rad), 2.6)
-    p.rect(20.0, 37.0, 34.0, 41.0, fill=ACCENT_RGBA)         # the bench at the well
-
-
-def _icon_oil(p):
-    """Crude rising: a barrel with a rising arrow."""
-    p.rect(10.0, 18.0, 36.0, 48.0, outline=INK_RGBA, w=STROKE_MAIN)
-    p.ellipse(23.0, 18.0, 13.0, 4.5, outline=INK_RGBA, w=2.5)      # top rim
-    p.line([(10.0, 28.0), (36.0, 28.0)], w=2.5)                    # hoops
-    p.line([(10.0, 40.0), (36.0, 40.0)], w=2.5)
-    p.line([(43.0, 45.0), (43.0, 22.0)], w=3.0, fill=ACCENT_RGBA)  # the arrow
-    p.poly([(43, 12), (37.5, 23), (48.5, 23)], fill=ACCENT_RGBA)
+    """Strasbourg: the European emblem — twelve small five-pointed stars on a 38 px ring, oxblood,
+    no centre mark."""
+    cx, cy, ring = 27.0, 27.0, 19.0
+    for i in range(12):
+        rad = math.radians(-90.0 + i * 30.0)              # one star at the top, evenly spaced
+        _star(p, cx + ring * math.cos(rad), cy + ring * math.sin(rad), 3.4)
 
 
 def _icon_moon(p):
-    """The first of three supermoons: a full disc, three craters, four short rays."""
-    cx, cy, r = 27.0, 26.0, 14.0
+    """The first of three supermoons: a full 36 px ink disc, three craters inside it only, and a
+    thin 2 px oxblood halo ring at 46 px. No rays, nothing protruding."""
+    cx, cy, r = 27.0, 27.0, 18.0
     p.ellipse(cx, cy, r, r, fill=INK_RGBA)
-    for dx, dy, rr in ((-5.0, -5.0, 3.2), (5.0, 4.0, 2.4), (-3.0, 7.0, 1.8)):
-        p.dot(cx + dx, cy + dy, rr, fill=CLEAR)
-    for a in (45, 135, 225, 315):
-        rad = math.radians(a)
-        p.line([(cx + 15.5 * math.cos(rad), cy + 15.5 * math.sin(rad)),
-                (cx + 24.0 * math.cos(rad), cy + 24.0 * math.sin(rad))], w=3.0)
+    # three craters, all clustered in one quadrant and of three sizes — a corner cluster cannot be
+    # read as two eyes and a mouth the way a centred triangle can
+    for dx, dy, rr in ((-7.5, -5.5, 2.9), (-2.0, -8.0, 2.1), (-8.0, 1.5, 1.6)):
+        p.dot(cx + dx, cy + dy, rr, fill=CLEAR)          # craters: paper through the disc
+    p.ellipse(cx, cy, 23.0, 23.0, outline=ACCENT_RGBA, w=2.0)     # the halo, 46 px across
 
 
 ICONS = {
@@ -561,7 +575,6 @@ ICONS = {
     "addis": _icon_addis,
     "planes": _icon_planes,
     "eu": _icon_eu,
-    "oil": _icon_oil,
     "moon": _icon_moon,
 }
 
@@ -570,8 +583,8 @@ def draw_pictogram(name, box):
     """
     One flat ink pictogram per story, 54x54, 2 px of air inside the box.
 
-    Every icon is built on a 4x scratch canvas and downscaled once, so the arcs of the horseshoe
-    and the hemicycle and the disc of the moon are smooth at 1:1 instead of staircased.
+    Every icon is built on a 4x scratch canvas and downscaled once, so the rim of the globe and the
+    circle of the halo and the stars of the emblem are smooth at 1:1 instead of staircased.
     """
     img, _ = _surface()
     x0, y0, x1, y1 = box
@@ -642,11 +655,9 @@ def build():
     draw_tracked(draw, SF_STORY["label"][0], f_sf, 0.0, X0, LEAD_SF_BASE, INK,
                  anchor="ls", name="standfirst")
 
-    # ---- brief grid -------------------------------------------------------------------
+    # ---- brief grid: three across the top, two wider across the foot ------------------
     for idx, story in enumerate(GRID_STORIES):
-        col, row = idx % COLS, idx // COLS
-        cx = GRID_X0 + col * (CELL_W + GUTTER)
-        cy = GRID_TOP + row * (CELL_H + GUTTER)
+        cx, cy, cell_w, cell_h = cell_rect(idx)
 
         icon_box = (cx, cy, cx + ICON, cy + ICON)
         draw_pictogram(story["icon"], icon_box)
@@ -662,13 +673,13 @@ def build():
             base = cy + (LBL_L1_BASE if li == 0 else LBL_L2_BASE)
             box, w = draw_tracked(draw, line, f_lbl, -0.3, cx, base, INK, anchor="ls",
                                   name="label:%s:%d" % (story["icon"], li + 1))
-            if w > CELL_W:
-                raise SystemExit("label wider than the cell: %r (%.1f > %d)" % (line, w, CELL_W))
-            if box[2] > cx + CELL_W:
+            if w > cell_w:
+                raise SystemExit("label wider than the cell: %r (%.1f > %d)" % (line, w, cell_w))
+            if box[2] > cx + cell_w:
                 raise SystemExit("label overruns its cell: %r right edge %.0f > %d"
-                                 % (line, box[2], cx + CELL_W))
+                                 % (line, box[2], cx + cell_w))
 
-        hairline(draw, cy + CELL_RULE_DY, x0=cx, x1=cx + CELL_W,
+        hairline(draw, cy + CELL_RULE_DY, x0=cx, x1=cx + cell_w,
                  name="rule:cell:%d" % idx)
 
     # ---- footer -----------------------------------------------------------------------
@@ -677,7 +688,9 @@ def build():
 
     bx0, by0, bx1, by1 = FOOT_BAR
     band(draw, by0, by1 - by0, INK, x0=bx0, x1=bx1, name="footer_bar")
-    f_fb = font(FONT_MONO, 20, weight=400)
+    # the bar now carries the full edition line, so it sets at 17 px (the type floor) to hold 82
+    # characters inside the 960 px bar with air at both ends
+    f_fb = font(FONT_MONO, 17, weight=400)
     draw_tracked(draw, FOOT_BAR_TEXT, f_fb, 1.0, PAGE / 2, by0 + 29, WHITE, anchor="ms",
                  name="foot_bar_text")
 
@@ -731,6 +744,26 @@ def check_layout():
                                  % (a["name"], *a["box"], b["name"], *b["box"]))
 
 
+def pairs_checked():
+    """Every pair of boxes the collision rule actually looks at, with the container exemptions."""
+    out = []
+    for i, a in enumerate(ITEMS):
+        for b in ITEMS[i + 1:]:
+            if a["kind"] == "container" or b["kind"] == "container":
+                cont, other = (a, b) if a["kind"] == "container" else (b, a)
+                if _inside(other["box"], cont["box"]):
+                    continue          # text inside its own bar/panel is intended
+            if a["kind"] == "container" and b["kind"] == "container":
+                continue
+            out.append((a, b))
+    return out
+
+
+def count_collisions():
+    """How many of those pairs actually overlap. check_layout() already refuses to reach 1."""
+    return sum(1 for a, b in pairs_checked() if _overlap(a["box"], b["box"]))
+
+
 def smallest_gap():
     best = (None, None, 1e9)
     for i, a in enumerate(ITEMS):
@@ -781,11 +814,15 @@ def ink_extent(img, box, thresh=30):
     return (cols[0], rows[0], cols[-1], rows[-1])
 
 
-def cell_box(idx):
-    col, row = idx % COLS, idx // COLS
-    cx = GRID_X0 + col * (CELL_W + GUTTER)
-    cy = GRID_TOP + row * (CELL_H + GUTTER)
-    return cx, cy
+def cell_rect(idx):
+    """
+    (x, y, width, height) of grid cell `idx`: the first three share the top row at one third of the
+    measure each; the last two share the foot row at half the content width less the gutter.
+    """
+    if idx < TOP_COLS:
+        return (GRID_X0 + idx * (TOP_CELL_W + GUTTER), GRID_TOP, TOP_CELL_W, CELL_H)
+    j = idx - TOP_COLS
+    return (X0 + j * (BOT_CELL_W + GUTTER), GRID_TOP + CELL_H + GUTTER, BOT_CELL_W, CELL_H)
 
 
 def check_labels():
@@ -795,8 +832,8 @@ def check_labels():
     """
     cells = {}
     for idx, story in enumerate(GRID_STORIES):
-        cx, cy = cell_box(idx)
-        cells[story["icon"]] = (cx, cy, cx + CELL_W, cy + CELL_H)
+        cx, cy, cw, ch = cell_rect(idx)
+        cells[story["icon"]] = (cx, cy, cx + cw, cy + ch)
 
     labs = [it for it in ITEMS if it["name"].startswith(("label:", "tag:"))]
 
@@ -883,19 +920,23 @@ def main():
             print("  %-12s ink %6.1f wide, right edge %6.1f, y %4.0f -> %4.0f"
                   % (it["name"], b[2] - b[0], b[2], b[1], b[3]))
 
-    print("\nGRID  (%d cols x %d rows, cell %d x %d, gutter %d, x0 %d, right edge %d)"
-          % (COLS, ROWS, CELL_W, CELL_H, GUTTER, GRID_X0, GRID_X0 + COLS * CELL_W + (COLS - 1) * GUTTER))
+    print("\nGRID  (3 across the top at %d, 2 across the foot at %d, gutter %d, cell h %d)"
+          % (TOP_CELL_W, BOT_CELL_W, GUTTER, CELL_H))
+    print("  top row   x %d -> %d   (%d + %d + %d + 2 x %d)"
+          % (GRID_X0, GRID_X0 + TOP_COLS * TOP_CELL_W + (TOP_COLS - 1) * GUTTER,
+             TOP_CELL_W, TOP_CELL_W, TOP_CELL_W, GUTTER))
+    print("  foot row  x %d -> %d   (%d + %d + %d)"
+          % (X0, X0 + BOT_COLS * BOT_CELL_W + (BOT_COLS - 1) * GUTTER,
+             BOT_CELL_W, BOT_CELL_W, GUTTER))
     for idx, story in enumerate(GRID_STORIES):
-        col, row = idx % COLS, idx // COLS
-        cx = GRID_X0 + col * (CELL_W + GUTTER)
-        cy = GRID_TOP + row * (CELL_H + GUTTER)
-        print("  [%d,%d] cell x %3d -> %3d  y %3d -> %3d   %s / %s"
-              % (col, row, cx, cx + CELL_W, cy, cy + CELL_H,
-                 story["tag"], story["icon"]))
+        cx, cy, cw, ch = cell_rect(idx)
+        row = "top" if idx < TOP_COLS else "foot"
+        print("  %-4s cell x %3d -> %3d  y %3d -> %3d  (%3d x %d)   %s / %s"
+              % (row, cx, cx + cw, cy, cy + ch, cw, ch, story["tag"], story["icon"]))
 
     print("\nPICTOGRAMS  (ink pixels inside the 54x54 box — floor 300)")
     for idx, story in enumerate(GRID_STORIES):
-        cx, cy = cell_box(idx)
+        cx, cy, cw, ch = cell_rect(idx)
         ibox = (cx, cy, cx + ICON, cy + ICON)
         n = ink_pixels(img, ibox)
         if n < 300:
@@ -908,19 +949,23 @@ def main():
     gap = smallest_label_gap(labs)
     print("\nLABELS  (ink width, right edge, cell right edge, clearance)")
     for idx, story in enumerate(GRID_STORIES):
-        cx, cy = cell_box(idx)
+        cx, cy, cw, ch = cell_rect(idx)
         for it in labs:
             if not it["name"].startswith("label:%s:" % story["icon"]):
                 continue
             b = it["box"]
             print("  %-16s %6.1f wide  right %6.1f  cell right %3d  clear %5.1f  ink h %4.1f"
-                  % (it["name"], b[2] - b[0], b[2], cx + CELL_W, cx + CELL_W - b[2], b[3] - b[1]))
+                  % (it["name"], b[2] - b[0], b[2], cx + cw, cx + cw - b[2], b[3] - b[1]))
     for it in labs:
         if it["name"].startswith("tag:"):
             b = it["box"]
             print("  %-16s %6.1f wide  right %6.1f  (region tag, Ubuntu Mono 17)"
                   % (it["name"], b[2] - b[0], b[2]))
-    print("  labels/tags       %d measured, 0 crossing the content box, 0 collisions" % len(labs))
+    n_coll = count_collisions()
+    print("  labels/tags       %d measured, 0 crossing the content box, %d collisions"
+          % (len(labs), n_coll))
+    if n_coll:
+        raise SystemExit("%d colliding pair(s) on the page" % n_coll)
     print("  smallest label gap %.1f px  between %s and %s" % (gap[2], gap[0], gap[1]))
 
     print("\nLEAD  (ink width, right edge, content right edge)")
@@ -968,7 +1013,8 @@ def main():
     print("  smallest gap      %.1f px  between %s and %s" % (gaps[2], gaps[0], gaps[1]))
     print("  edge margin       %d px, nothing outside x %d..%d / y %d..%d"
           % (EDGE, EDGE, PAGE - EDGE, EDGE, PAGE - EDGE))
-    print("  collisions        0")
+    print("  pairs checked     %d" % len(pairs_checked()))
+    print("  collisions        %d" % count_collisions())
 
     print("\nFILE")
     print("  %s" % os.path.abspath(out))
