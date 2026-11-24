@@ -1,0 +1,8 @@
+{
+  "name": "makefun-news-24nov2026",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "description": "One image that sums up the world's news of Tuesday 24 November 2026, drawn in code with Pillow."
+}
