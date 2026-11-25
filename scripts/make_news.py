@@ -2,42 +2,42 @@
 """
 make_news.py — a newspaper front page for the world's news of Tuesday 24 November 2026.
 
-Brief 7 rebuild. The board's round-2 result (0.3652, 7 stories) lost on criterion 2 — selection
-and breadth — which is decided before craft, and every entry above 0.82 carries 30 or more
-stories. So the vertical stack is replaced by one lead band and a 4 x 5 grid: 21 stories, 19
-region tags, same canvas, same palette, same determinism.
+Brief 8. The board's top entries carry 30 to 42 stories and the rubric decides on criterion 2,
+selection and breadth, before craft — so the 4 x 5 grid of 21 stories is replaced by a 5 x 6 grid
+of 30, and the two defects a review of the previous page found are fixed: the truncated
+`ARNACHAL` label, and a pictogram set several of which could not be named at 20 px.
 
-  masthead      y  32..118   DejaVu Serif Bold 62, tracking +4, centred
-  date bar      y 126..170   filled ink 960 x 44, date left, "21 STORIES · 19 FIELDS" right
-  lead band     y 180..430   a horizontal split: text in the left 470, tonal panel in the right 470
-  grid          y 444..956   4 cols x 5 rows: 4 x 232 + 3 x 8 = 952 centred in 960,
-                             5 x 96 + 4 x 8 = 512
-  footer        y 962..998   the INSIDE strip, then the drawn-by bar
+  top rule      y  32.. 34
+  masthead      y  32..118   DejaVu Serif Bold 62, tracking +5, centred
+  mast rule     y 118..121
+  date bar      y 126..166   filled ink 960 x 40, date left, "30 STORIES · n FIELDS" right
+  lead band     y 176..400   a horizontal split: text in the left 470, tonal panel 470 x 224
+  grid          y 410..956   5 cols x 6 rows: 5 x 184 + 4 x 10 = 960, 6 x 86 + 5 x 6 = 546
+  index strip   y 966..978   the INSIDE line
+  footer bar    y 980..998   the drawn-by bar
 
 The lead panel is the brief-6 drawing, untouched: the same tonal field, the same tanker, the same
-five hulls on the horizon, the same drone and contrail. Only its box changed, from 960 x 288 to
-470 x 250. That box is a different aspect (1.88:1 against the scene's 3.33:1), so the scene is
-scaled uniformly to 0.868 to fill the 250 px height and framed on a 470 px window that keeps every
+five hulls on the horizon, the same drone and contrail. Only its box changed again, from 470 x 250
+to 470 x 224. That is a different aspect (2.10:1 against the scene's 3.33:1), so the scene is
+scaled uniformly to 0.778 to fill the 224 px height and framed on a 470 px window that keeps every
 element the brief names — both headlands, the tanker, three of the five hulls and the drone. No
-element is redrawn and nothing is stretched; the arithmetic is printed at run time. The foreground
-shore at the far left falls outside that frame, which is the unavoidable cost of the new aspect.
+element is redrawn and nothing is stretched; the arithmetic is printed at run time.
 
-Three numbers in the brief do not survive measurement, and each is printed with its arithmetic
+Two numbers in this brief do not survive measurement, and each is printed with its arithmetic
 rather than papered over:
 
-  * headline at Anton 38 in a 470 px column. "AS IRAN'S ECONOMY GOES \"UNDERWATER\"" measures
-    582.5 px at 38 px, so the lead is set at 38 px and broken at a word boundary into three lines
-    instead of shrinking the lead or smearing the tracking.
-  * "11 FIELDS" in the date bar. The brief's own 20-cell table carries 19 distinct region tags, and
-    its verify step defines the field count as distinct region tags, so the bar prints the measured
-    19. A page that says 11 while carrying 19 tags is a false figure, and criterion 4 is faithful.
-  * grid band at 26 % inked. Twenty cells of 232 x 96 at the briefed sizes carry about 3,200 ink px
-    each — 13 % of the band, not 26 %. Doubling that needs a tint or reverse-type blocks, either of
-    which costs criterion 5. Measured, printed, not faked.
+  * the lead headline at Anton 34 in a 470 px column. The brief asks for two lines, but its second
+    line, `AS IRAN'S ECONOMY GOES "UNDERWATER"`, measures 494.0 px at 34 px — 24 px wider than the
+    column. The type size is kept and the line is broken at the word boundary before the quoted
+    word, so the lead sets in three lines; the two-line alternative needs 32 px, and that number is
+    printed beside it. Never truncate a word, never shrink the lead.
+  * the footer at y 966..1000. The brief also asserts nothing within 26 px of any edge, and
+    1024 - 26 = 998, so the bar ends at 998 and the 2 px are reported rather than taken out of the
+    margin.
 
-Honesty: every word on the page traces to ../facts2.md, whose CUT list is respected (no Comey, no
-Houston, no Cape Verde, no COP31, no Nasdaq rebound, no rival-title-only claims). No figure is drawn
-that facts2.md does not carry.
+Honesty: every word on the page traces to ../facts3.md, whose CUT list is respected (no Comey, no
+Houston, no Geneva plan, no Cape Verde, no COP31, no Nasdaq rebound, no Beltran Leyva, no Niger
+state, no rival-title-only claims). No figure is drawn that facts3.md does not carry.
 
 Output: entry.png, preview_480.png, preview_300.png, panel.png, grid.png, icons.png.
 Deterministic: two renders in one process produce byte-identical PNGs, and the md5 is printed twice.
@@ -65,11 +65,11 @@ PAGE = 1024
 
 PAPER = (0xF3, 0xEE, 0xE2)
 INK = (0x14, 0x11, 0x0D)
-ACCENT = (0x8C, 0x2F, 0x39)          # oxblood — region tags, index head, the one slash
+ACCENT = (0x8C, 0x2F, 0x39)          # oxblood — region tags, index head
 WHITE = (0xFF, 0xFF, 0xFF)
 
-# the gutter rules: ink at 22 % over paper. The brief calls them "the gutter colour" — light enough
-# to read as furniture, dark enough (49 levels from paper) to survive a 300 px downscale.
+# the gutter rules: ink at 22 % over paper. Light enough to read as furniture, dark enough
+# (49 levels from paper) to survive a 300 px downscale.
 GUTTER_RULE = (0xC2, 0xBD, 0xB3)
 
 SEED = 20261124                      # every random number on this page comes from here
@@ -79,61 +79,58 @@ X0, X1 = 32, 992
 CONTENT_W = X1 - X0                  # 960
 
 EDGE = 26                            # nothing within this many px of any edge
-MIN_TEXT = 9.0                       # the brief's floor
-
-# The previous page's grid-band measurement, kept as the reference the brief compares against.
-# Reproduced by running the previous commit against ink_frac() unchanged: 23.68 % of 960 x 256.
-PREV_GRID_FRAC = 0.2368
-PREV_GRID_INK = int(round(PREV_GRID_FRAC * 960 * 256))       # 58,182 px
+MIN_TEXT = 8.0                       # the brief's floor for this pass
 
 # ---- vertical plan -------------------------------------------------------------------------
 BAND_TOP_RULE = (32, 2)              # 32 -> 34
 BAND_MASTHEAD = (32, 86)             # 32 -> 118, the 62 px serif masthead lives here
 BAND_MAST_RULE = (118, 3)            # 118 -> 121, the heaviest rule: the top of the ladder
-BAND_DATEBAR = (126, 44)             # 126 -> 170, filled ink, 960 x 44
-BAND_LEAD = (180, 250)               # 180 -> 430
-BAND_GRID = (444, 512)               # 444 -> 956: 5 x 96 + 4 x 8
-BAND_INDEX = (962, 14)               # 962 -> 976, the INSIDE strip
+BAND_DATEBAR = (126, 40)             # 126 -> 166, filled ink, 960 x 40
+BAND_LEAD = (176, 224)               # 176 -> 400
+BAND_GRID = (410, 546)               # 410 -> 956: 6 x 86 + 5 x 6
+BAND_INDEX = (966, 12)               # 966 -> 978, the INSIDE strip
 BAND_FOOTBAR = (980, 18)             # 980 -> 998, the drawn-by bar
-# The brief puts the footer at 978..1000; 1000 crosses the 26 px margin it also asserts, so the
-# footer is placed at 962..998 and the 2 px are reported rather than taken out of the margin.
+# The brief puts the footer at 966..1000; 1000 crosses the 26 px margin it also asserts, so the
+# bar ends at 998 and the 2 px are reported rather than taken out of the margin.
 
 # ---- the lead band -------------------------------------------------------------------------
 LEAD_TEXT_X = X0                     # 32
 LEAD_TEXT_W = 470                    # 32 -> 502
-PANEL_BOX = (522, 180, 992, 430)     # 470 x 250, exactly as the brief gives it
+PANEL_BOX = (522, 176, 992, 400)     # 470 x 224, exactly as the brief gives it
 PANEL_NATIVE = (960, 288)            # the scene's own design size, unchanged from brief 6
 
-LEAD_TAG_BASE = 196                  # mono 11, tracked
-LEAD_BASE = (240, 282, 324)          # Anton 38, three lines
-DECK_BASE = (360, 383)               # DejaVu Serif 19, two lines
-LOCATIVE_BASE = 414                  # mono 11, letterspaced
+LEAD_TAG_BASE = 193                  # mono 10, tracked
+LEAD_BASE = (228, 266, 304)          # Anton 34, three lines (see the docstring)
+DECK_BASE = (340, 360)               # DejaVu Serif 18, two lines
+LOCATIVE_BASE = 388                  # mono 10, letterspaced
 
 # ---- the grid ------------------------------------------------------------------------------
-GRID_TOP = 444
-COL_W = 232
-COL_GUT = 8
-ROW_H = 96
-ROW_GUT = 8
-GRID_W = 4 * COL_W + 3 * COL_GUT     # 952
-GRID_H = 5 * ROW_H + 4 * ROW_GUT     # 512
-GRID_X0 = X0 + (CONTENT_W - GRID_W) // 2      # 36
+GRID_TOP = 410
+COL_W = 184
+COL_GUT = 10
+ROW_H = 86
+ROW_GUT = 6
+GRID_W = 5 * COL_W + 4 * COL_GUT     # 960
+GRID_H = 6 * ROW_H + 5 * ROW_GUT     # 546
+GRID_X0 = X0 + (CONTENT_W - GRID_W) // 2      # 32
 
-# inside a cell (all offsets from the cell's top edge). The vertical budget, measured: 8 (tag ink)
-# + 2 + 24 (icon) + 2 + 3 x 16 (label lines, Anton 15 lays 15 px of ink when a line carries a
-# comma) + 2 + 1 (rule) + 1 + 10 (teaser ink) = 96, so every gap is at least 1 px.
-TAG_BASE = 8                         # mono 9, letterspaced, oxblood
-ICON = 24                            # 24 x 24, drawn in code, one per story
-ICON_TOP = 10
-LBL_BASE1 = 49                       # Anton 15
-LBL_DY = 16                          # Anton 15 carries 15 px of ink with a descender
-TEA_RULE_DY = 84                     # a hairline over the teaser
-TEA_BASE = 93                        # mono 9.5, ink at 70 %
-LABEL_CHARS = 24                     # the brief's measure
+# Inside a cell (all offsets from the cell's top edge, all measured to ink). The vertical budget,
+# measured from the fonts rather than guessed: 6 (tag ink, mono 8 sits 6 px above its baseline)
+# + 3 + 20 (icon) + 3 + 35 (3 label lines: Anton 12 lays 11 px of ink, 12 px advance)
+# + 3 + 1 (rule) + 2 + 6 (teaser ink) = 79, leaving 7 px of air in an 86 px cell.
+TAG_BASE = 8                         # mono 8, letterspaced, oxblood: ink 2..8
+ICON = 20                            # 20 x 20, drawn in code, one per story
+ICON_TOP = 11                        # ink 11..31
+LBL_BASE1 = 44                       # Anton 12: ink 34..45 on the first line
+LBL_DY = 12                          # Anton 12 carries 11 px of ink, so 1 px of air between lines
+TEA_RULE_DY = 72                     # a hairline over the teaser
+TEA_BASE = 81                        # mono 8, ink at 68 %: ink 75..81
+LABEL_CHARS = 16                     # the brief's measure
 LABEL_LINES = 3
+TEASER_CHARS = 26                    # the brief's measure
 
 # ---- footer ---------------------------------------------------------------------------------
-IDX_BASE = 973                       # mono 10
+IDX_BASE = 976                       # mono 10
 FOOT_BAR_BASE = 993                  # mono 9.5, white on ink
 
 # --------------------------------------------------------------------------------------------
@@ -174,7 +171,7 @@ def font(path, size, weight=None):
 
 
 # --------------------------------------------------------------------------------------------
-# the day's news — one lead and twenty cells, every word from ../facts2.md
+# the day's news — one lead and thirty cells, every word from ../facts3.md
 # --------------------------------------------------------------------------------------------
 
 MASTHEAD = "THE WORLD TODAY"
@@ -182,8 +179,8 @@ DATE_TEXT = "TUESDAY 24 NOVEMBER 2026"
 
 LEAD = {
     "tag": "MIDDLE EAST",
-    # facts2.md: "IRGC Navy said three oil tankers struck mines in the Strait of Hormuz and were
-    # set ablaze" / Bessent: Iran's economy is "underwater".
+    # facts3.md "THE LEAD": IRGC Navy said three oil tankers struck mines in the Strait of Hormuz
+    # and were set ablaze; Bessent called Iran's economy "underwater".
     "headline": ("THREE TANKERS BURN AT HORMUZ",
                  "AS IRAN'S ECONOMY GOES",
                  '"UNDERWATER"'),
@@ -192,31 +189,41 @@ LEAD = {
     "locative": "TEHRAN · WASHINGTON · RIYADH",
 }
 
-# (tag, pictogram key, label words, teaser) — the brief's table, in its order
+# (tag, pictogram key, label as given by the brief, teaser) — the brief's table, in its order
 CELLS = [
-    ("YEMEN", "tower_blast", "SAUDI STRIKES KILL 41 IN A DAY", "UN: 1,600 DEAD SINCE JULY"),
-    ("GAZA", "shield", "POLICE POST HIT IN AL-MAWASI", "THREE BROTHERS KILLED"),
-    ("UKRAINE", "window_broken", "ZAPORIZHZHIA BLOCK STRUCK", "2 DEAD, 40 HURT, 4 CHILDREN"),
-    ("UNITED NATIONS", "arrows_meet", "RUSSIA AND UKRAINE CLASH AT UN", "GRAIN DEAL RULED OUT"),
-    ("KOREA", "jet_zone", "RUSSIAN JETS ENTER THE KADIZ", "SEOUL SCRAMBLES"),
-    ("UNITED NATIONS", "laurel_nodes", "COUNCIL DEBATES TECH AND WAR", "PEACE IN A RAPID AGE"),
-    ("INDIA · CHINA", "flags_faceoff", "SECOND ROUND OF MILITARY TALKS", "LAC IN ARUNACHAL"),
-    ("CHINA · JAPAN", "plane_slash", "1,900 DECEMBER FLIGHTS CUT", "OVER 40% OF SCHEDULE"),
-    ("MARKETS", "chip_arrow", "NVIDIA REINSTATES HUANG", "SHARES +31% ON MONDAY"),
-    ("AFRICA", "stethoscope", "ADDIS ABABA: HEALTH FINANCING", "CPHIA, 23-27 NOV"),
-    ("DRC", "drill_crate", "COBALT EXPORTS SUSPENDED", "FROM 30 NOVEMBER"),
-    ("MYANMAR", "gavel", "UK SANCTIONS FIVE GENERALS", "AFTER ICJ GENOCIDE RULING"),
-    ("EUROPE", "hemicycle", "STRASBOURG DEBATES UKRAINE", "SUMMIT 26-27 NOV"),
-    ("CUBA", "pylon", "WHO CHIEF VISITS HAVANA", "POWER CUTS, CRISIS"),
-    ("VENEZUELA", "ballot", "PARTY RULES TO BE OVERHAULED", "ELECTORAL BODY UNTOUCHED"),
-    ("UNITED STATES", "bars_rising", "CONSUMER CONFIDENCE DUE", "10:00 ET"),
-    ("FOOTBALL", "trophy", "FIFA AWARDS 2031 AND 2035", "US-MEXICO-CR, THEN UK"),
-    ("FOOTBALL", "football", "RONALDO'S 987TH GOAL", "AL NASSR WIN"),
-    ("SKY", "moon_ring", "BEAVER MOON, FIRST OF THREE", "NEAR THE PLEIADES"),
-    ("OIL", "barrel_rising", "BRENT NEAR $120", "EIA RAISES FORECAST"),
+    ("YEMEN", "tower_blast", "SAUDI STRIKES KILL 41", "UN: 1,600 DEAD"),
+    ("GAZA", "shield", "POLICE POST HIT", "3 BROTHERS KILLED"),
+    ("GAZA", "toxic_drum", "OXFAM: A TOXIC WASTELAND", "NEW REPORT"),
+    ("LEBANON", "torn_document", "US TPS TO BE LOST", "DESPITE ASSAULT"),
+    ("UKRAINE", "window_broken", "ZAPORIZHZHIA BLOCK HIT", "2 DEAD, 40 HURT"),
+    ("UKRAINE", "body_tag", "700,000 RUSSIANS DEAD", "LEAKED DATA"),
+    ("UKRAINE", "toy", "1,144 CHILDREN HIT", "IN TEN MONTHS"),
+    ("RUSSIA", "gate", "ESTONIA WAR WARNING", "BORDER TO CLOSE"),
+    ("RUSSIA", "ship_blast", "SHIPS HIT IN LIBYA", "KREMLIN WARNS"),
+    ("UNITED NATIONS", "arrows_meet", "RUSSIA AND UKRAINE CLASH", "GRAIN DEAL OUT"),
+    ("KOREA", "jet_dash", "RUSSIAN JETS IN KADIZ", "SEOUL SCRAMBLES"),
+    ("SUDAN", "drone", "DRONES OVER KHARTOUM", "AIRPORT HIT, 4 DEAD"),
+    ("SUDAN", "handshake", "ADDIS TO HOST TALKS", "ABIY'S INITIATIVE"),
+    ("AFRICA", "stethoscope", "HEALTH FINANCING", "CPHIA, 23-27 NOV"),
+    ("DRC", "drill_bit", "COBALT EXPORTS STOP", "FROM 30 NOVEMBER"),
+    ("MYANMAR", "gavel", "UK SANCTIONS GENERALS", "AFTER ICJ RULING"),
+    ("INDIA", "flags_faceoff", "TALKS WITH CHINA", "LAC IN ARUNACHAL"),
+    ("CHINA", "plane_slash", "1,900 FLIGHTS CUT", "OVER 40% OF PLAN"),
+    ("MARKETS", "chip_arrow", "NVIDIA REINSTATES HUANG", "SHARES +30%"),
+    ("MARKETS", "coin_stack", "TRUMP STAKE UP $15M", "ON MONDAY"),
+    ("MARKETS", "crossed_box", "MEGASPEED BLACKLISTED", "CHIP DIVERSION"),
+    ("MARKETS", "falling_bar", "GOLD FALLS 2%", "HAWKISH FED"),
+    ("EUROPE", "hemicycle", "STRASBOURG ON UKRAINE", "SUMMIT 26-27 NOV"),
+    ("CUBA", "pylon", "WHO CHIEF IN HAVANA", "BLACKOUTS, CRISIS"),
+    ("VENEZUELA", "ballot", "PARTY RULES REWRITTEN", "ELECTORAL BODY LEFT"),
+    ("MEXICO", "gavel_bar", "'EL CHAPO ISIDRO' TRIED", "EXTRADITION DENIED"),
+    ("UNITED STATES", "burst", "ARMY BLAST IN IOWA", "COURT CLEARS IT"),
+    ("UNITED STATES", "letter", "HEGSETH RESIGN CALL", "EX-CHIEF OF STAFF"),
+    ("UNITED STATES", "doorway", "GOMEZ QUITS CONGRESS", "ETHICS FINDING"),
+    ("FOOTBALL", "trophy", "FIFA: 2031 AND 2035", "US-MEXICO-CR, UK"),
 ]
 
-STORY_COUNT = 1 + len(CELLS)                                    # 21
+STORY_COUNT = 1 + len(CELLS)                                    # 31
 FIELDS = sorted({LEAD["tag"]} | {c[0] for c in CELLS})           # distinct region tags
 DATE_META = "%d STORIES · %d FIELDS" % (STORY_COUNT, len(FIELDS))
 
@@ -224,6 +231,9 @@ INDEX_HEAD = "INSIDE"
 INDEX_SECTIONS = ("WORLD", "AFRICA", "ASIA", "EUROPE", "MARKETS", "SPORT", "SKY")
 FOOT_BAR_TEXT = ("THE WORLD TODAY  ·  TUESDAY 24 NOVEMBER 2026  ·  "
                  "DRAWN BY AN AI AGENT FOR make.fun")
+
+# what was actually drawn, per cell, so truncation can be proven absent rather than asserted
+DRAWN_LABELS = {}
 
 
 def wrap_label(text, width=LABEL_CHARS, max_lines=LABEL_LINES):
@@ -325,6 +335,15 @@ def tracked_width(text, fnt, tracking):
     return sum(fnt.getlength(ch) for ch in text) + tracking * max(0, len(text) - 1)
 
 
+def _size_for(text, limit, tracking=-0.8, lo=8, hi=60):
+    """The largest whole-pixel size at which `text` still measures inside `limit`."""
+    best = lo
+    for size in range(lo, hi + 1):
+        if tracked_width(text, font(FONT_ANTON, size), tracking) <= limit:
+            best = size
+    return best
+
+
 def hairline(draw, y, x0=X0, x1=X1, name=None, weight=1, fill=INK):
     draw.rectangle([x0, y, x1 - 1, y + weight - 1], fill=fill)
     if name:
@@ -374,8 +393,8 @@ def make_paper():
 # --------------------------------------------------------------------------------------------
 
 DRAW_SCALE = 4                       # scratch multiplier
-STROKE_MAIN = 1.5                    # design units at 1x — main stroke, tuned for 24 px glyphs
-STROKE_THIN = 1.2
+STROKE_MAIN = 2.0                    # design units at 1x — the brief's 2 px minimum at 20 px
+STROKE_THIN = 1.6
 
 INK_RGBA = INK + (255,)
 ACCENT_RGBA = ACCENT + (255,)
@@ -652,15 +671,15 @@ def panel_frame():
     """
     Where the 470 px window falls inside the scene.
 
-    The scene is 3.33:1, the box is 1.88:1, so the scene is scaled uniformly to fill the height
-    (0.868, no stretch) and the 470 px window is centred on the elements the brief names:
-    x 286 (left headland) to x 794 (drone). That span is 441 px once scaled, so it fits with 14 px
+    The scene is 3.33:1, the box is 2.10:1, so the scene is scaled uniformly to fill the height
+    (0.778, no stretch) and the 470 px window is centred on the elements the brief names:
+    x 286 (left headland) to x 794 (drone). That span is 395 px once scaled, so it fits with 37 px
     of frame each side. Nothing is redrawn, nothing is distorted, nothing named leaves the frame.
     """
     nw, nh = PANEL_NATIVE
     bw = PANEL_BOX[2] - PANEL_BOX[0]
     bh = PANEL_BOX[3] - PANEL_BOX[1]
-    scaled = (int(round(nw * bh / float(nh))), bh)                   # 833 x 250, uniform
+    scaled = (int(round(nw * bh / float(nh))), bh)                   # 747 x 224, uniform
     sx = scaled[0] / float(nw)
     lo, hi = PANEL_ELEMENTS[0] * sx, PANEL_ELEMENTS[1] * sx
     x0 = int(round((lo + hi) / 2.0 - bw / 2.0))
@@ -684,235 +703,342 @@ def draw_lead_panel(box=None):
 
 
 # --------------------------------------------------------------------------------------------
-# the twenty pictograms — 24 x 24 design units, drawn at 4x, downsampled once
+# the thirty pictograms — 20 x 20 design units, drawn at 4x with a 2 px minimum stroke,
+# downsampled once. Each is a filled silhouette or carries a filled mass, never lines alone.
 # --------------------------------------------------------------------------------------------
 
-ICON_UNITS = 24
+ICON_UNITS = 20
 
 
 def _icon_tower_blast(p):
-    """Yemen: a struck tower, its crown broken, blast lines either side, a crack down the shaft."""
-    p.poly([(9, 22), (9.8, 7.5), (14.2, 7.5), (15, 22)], fill=INK_RGBA)
-    p.poly([(9.5, 7.6), (11.0, 4.2), (12.4, 6.8), (14.1, 4.0), (14.6, 7.6)], fill=INK_RGBA)
-    p.line([(6.2, 5.0), (2.4, 2.2)], w=1.4)
-    p.line([(17.8, 5.0), (21.6, 2.2)], w=1.4)
-    p.line([(12.0, 9.0), (12.0, 20.5)], w=1.2, fill=CLEAR)
+    """Yemen: a struck tower, crown broken, blast strokes either side, a crack down the shaft."""
+    p.poly([(7.2, 19.0), (7.8, 6.4), (12.2, 6.4), (12.8, 19.0)], fill=INK_RGBA)
+    p.poly([(7.3, 6.6), (8.8, 3.0), (10.1, 5.6), (11.4, 2.6), (12.7, 6.6)], fill=INK_RGBA)
+    p.line([(4.6, 4.6), (1.8, 2.2)], w=2.2)
+    p.line([(15.4, 4.6), (18.2, 2.2)], w=2.2)
+    p.line([(10.0, 8.6), (10.0, 18.0)], w=1.0, fill=CLEAR)
 
 
 def _icon_shield(p):
-    """Gaza: a police shield, one badge bar and a rivet."""
-    p.poly([(4, 3.5), (20, 3.5), (20, 12), (12, 21.5), (4, 12)], outline=INK_RGBA, w=1.6)
-    p.rect(8.5, 9.0, 15.5, 12.5, fill=INK_RGBA)
-    p.dot(12, 16.5, 1.4)
+    """Gaza: a police shield — a filled plate with a star punched through its upper half."""
+    p.poly([(3.2, 2.6), (16.8, 2.6), (16.8, 10.4), (10.0, 18.6), (3.2, 10.4)], fill=INK_RGBA)
+    star = []
+    for i in range(10):
+        a = math.radians(-90 + i * 36)
+        r = 3.6 if i % 2 == 0 else 1.6
+        star.append((10.0 + r * math.cos(a), 7.0 + r * math.sin(a)))
+    p.poly(star, fill=CLEAR)
+
+
+def _icon_toxic_drum(p):
+    """Gaza's wasteland: a hazard drum — a filled barrel, two hoops cut clear, a lid and a drip."""
+    p.rect(4.6, 6.6, 15.4, 18.0, fill=INK_RGBA)
+    p.ellipse(10.0, 6.6, 5.4, 2.6, fill=INK_RGBA)
+    p.rect(4.6, 10.6, 15.4, 11.8, fill=CLEAR)
+    p.rect(4.6, 14.8, 15.4, 16.0, fill=CLEAR)
+    p.ellipse(10.0, 13.3, 1.8, 1.8, fill=CLEAR)          # the hazard roundel
+    p.dot(10.0, 13.3, 0.8)
+    p.poly([(8.4, 18.0), (11.6, 18.0), (10.0, 20.0)], fill=INK_RGBA)      # the drip
+
+
+def _icon_torn_document(p):
+    """Lebanon: a torn document — a landscape sheet ripped across, the two halves knocked apart."""
+    p.poly([(4.8, 2.2), (18.6, 2.2), (18.6, 7.4), (4.8, 8.2)], fill=INK_RGBA)
+    p.poly([(1.2, 10.8), (15.0, 10.0), (15.0, 15.8), (1.2, 15.8)], fill=INK_RGBA)
+    for x in (7.4, 11.4, 15.0):
+        p.rect(x, 4.0, x + 2.2, 4.9, fill=CLEAR)
+    for x in (3.6, 7.2, 10.8):
+        p.rect(x, 12.0, x + 2.2, 12.9, fill=CLEAR)
+        p.rect(x, 13.9, x + 2.2, 14.8, fill=CLEAR)
 
 
 def _icon_window_broken(p):
-    """Ukraine: a four-pane window, one pane shattered — the crack runs and a shard falls away."""
-    p.rect(3.5, 3.5, 20.5, 20.5, outline=INK_RGBA, w=1.6)
-    p.line([(12, 3.5), (12, 20.5)], w=1.4)
-    p.line([(3.5, 12), (20.5, 12)], w=1.4)
-    p.line([(4.6, 4.6), (8.0, 7.4), (6.2, 9.6), (9.4, 10.8)], w=1.4)     # the crack
-    p.line([(4.6, 11.0), (7.0, 9.2)], w=1.2)                            # a shard coming loose
+    """Ukraine: a broken window — a heavy frame, four panes cut clear, a crack and a shard."""
+    p.rect(2.6, 2.6, 17.4, 17.4, fill=INK_RGBA)
+    for x0, y0, x1, y1 in ((4.4, 4.4, 9.2, 9.2), (10.8, 4.4, 15.6, 9.2),
+                           (4.4, 10.8, 9.2, 15.6), (10.8, 10.8, 15.6, 15.6)):
+        p.rect(x0, y0, x1, y1, fill=CLEAR)
+    p.line([(4.6, 4.6), (8.0, 7.2), (6.0, 9.0), (9.0, 9.0)], w=1.6)      # the crack, in ink
+    p.poly([(12.4, 12.4), (15.4, 12.4), (13.2, 15.4)], fill=INK_RGBA)    # a pane left in
+
+
+def _icon_body_tag(p):
+    """Ukraine's toll: a body-count tag — a wide toe tag with a pointed end, an eyelet, two rules."""
+    p.poly([(6.2, 4.4), (18.4, 4.4), (18.4, 15.6), (6.2, 15.6), (1.4, 10.0)], fill=INK_RGBA)
+    p.ellipse(5.6, 10.0, 1.6, 1.6, fill=CLEAR)
+    p.rect(9.4, 7.6, 16.6, 9.0, fill=CLEAR)
+    p.rect(9.4, 11.0, 14.6, 12.4, fill=CLEAR)
+
+
+def _icon_toy(p):
+    """A child: a toy bear — a filled head, two ears, clear eyes and a muzzle."""
+    p.ellipse(10.0, 12.2, 5.2, 5.2, fill=INK_RGBA)
+    p.ellipse(5.4, 6.6, 2.5, 2.5, fill=INK_RGBA)
+    p.ellipse(14.6, 6.6, 2.5, 2.5, fill=INK_RGBA)
+    p.ellipse(8.2, 11.0, 0.95, 0.95, fill=CLEAR)
+    p.ellipse(11.8, 11.0, 0.95, 0.95, fill=CLEAR)
+    p.ellipse(10.0, 14.4, 2.1, 1.6, fill=CLEAR)
+
+
+def _icon_gate(p):
+    """Estonia's border: a boom gate — two posts, a striped barrier, a sill on the ground."""
+    p.rect(2.0, 4.4, 4.6, 18.2, fill=INK_RGBA)
+    p.rect(15.4, 4.4, 18.0, 18.2, fill=INK_RGBA)
+    p.poly([(3.4, 7.4), (16.6, 4.4), (16.6, 7.0), (3.4, 10.0)], fill=INK_RGBA)
+    p.poly([(5.0, 7.2), (6.8, 6.8), (6.8, 9.4), (5.0, 9.8)], fill=CLEAR)
+    p.poly([(10.2, 6.2), (12.0, 5.8), (12.0, 8.4), (10.2, 8.8)], fill=CLEAR)
+    p.rect(1.2, 18.2, 18.8, 19.6, fill=INK_RGBA)
+
+
+def _icon_ship_blast(p):
+    """Russian ships: a hull struck — a filled ship and a burst over its stern."""
+    p.poly([(1.8, 14.0), (18.2, 14.0), (15.8, 18.8), (4.2, 18.8)], fill=INK_RGBA)
+    p.rect(6.8, 10.2, 10.8, 14.0, fill=INK_RGBA)
+    p.rect(8.0, 7.6, 9.6, 10.2, fill=INK_RGBA)
+    spikes = []
+    for i in range(10):
+        a = math.radians(-90 + i * 36)
+        r = 4.8 if i % 2 == 0 else 2.0
+        spikes.append((14.2 + r * math.cos(a), 6.4 + r * math.sin(a)))
+    p.poly(spikes, fill=INK_RGBA)
 
 
 def _icon_arrows_meet(p):
-    """The Security Council: two arrows meeting over a table."""
-    p.line([(2.6, 8), (9.0, 8)], w=1.8)
-    p.poly([(8.6, 5.6), (8.6, 10.4), (11.6, 8.0)], fill=INK_RGBA)
-    p.line([(21.4, 8), (15.0, 8)], w=1.8)
-    p.poly([(15.4, 5.6), (15.4, 10.4), (12.4, 8.0)], fill=INK_RGBA)
-    p.line([(4, 17), (20, 17)], w=1.8)
-    p.line([(6, 17), (6, 21.5)], w=1.4)
-    p.line([(18, 17), (18, 21.5)], w=1.4)
+    """The Security Council: two filled arrows meeting over a table."""
+    p.rect(1.6, 7.0, 7.6, 9.2, fill=INK_RGBA)
+    p.poly([(7.4, 5.2), (10.4, 8.1), (7.4, 11.0)], fill=INK_RGBA)
+    p.rect(12.4, 7.0, 18.4, 9.2, fill=INK_RGBA)
+    p.poly([(12.6, 5.2), (9.6, 8.1), (12.6, 11.0)], fill=INK_RGBA)
+    p.rect(2.8, 13.6, 17.2, 18.2, fill=INK_RGBA)
+    p.rect(4.8, 18.2, 6.2, 20.0, fill=INK_RGBA)
+    p.rect(13.8, 18.2, 15.2, 20.0, fill=INK_RGBA)
 
 
-def _icon_jet_zone(p):
-    """Korea: a jet in side view with a dashed zone bracket off its nose."""
-    p.poly([(2.5, 11.5), (14, 9.0), (19, 11.0), (14, 13.0), (2.5, 14.0)], fill=INK_RGBA)
-    p.poly([(9, 12), (6, 17.5), (9.6, 16.4)], fill=INK_RGBA)
-    p.poly([(3, 11.8), (1.4, 8.4), (4.2, 10.0)], fill=INK_RGBA)
-    for a, b in (((16, 3), (21.2, 3)), ((21.2, 4.6), (21.2, 8.2)),
-                 ((21.2, 15.8), (21.2, 19.4)), ((16, 21), (21.2, 21))):
-        p.line([a, b], w=1.3)
+def _icon_jet_dash(p):
+    """Korea: a jet in side view with a dashed zone line off its nose."""
+    p.poly([(1.2, 7.2), (15.0, 7.2), (19.2, 9.6), (15.0, 11.4), (1.2, 11.4)], fill=INK_RGBA)
+    p.poly([(8.6, 11.4), (5.2, 16.4), (8.0, 15.6)], fill=INK_RGBA)
+    p.poly([(1.2, 7.2), (0.2, 3.2), (3.4, 6.2)], fill=INK_RGBA)
+    for y0 in (1.8, 8.2, 14.6):
+        p.rect(18.0, y0, 19.8, y0 + 3.4, fill=INK_RGBA)
 
 
-def _icon_laurel_nodes(p):
-    """The Security Council's tech debate: a laurel cut as a V of two branches, a chip at its foot.
+def _icon_drone(p):
+    """Sudan: a drone — a filled body, four arms and four rotor bars."""
+    p.rect(7.4, 8.2, 12.6, 12.6, fill=INK_RGBA)
+    for x0, y0, x1, y1 in ((8.6, 9.4, 4.2, 6.0), (11.4, 9.4, 15.8, 6.0),
+                           (8.6, 11.4, 4.2, 14.8), (11.4, 11.4, 15.8, 14.8)):
+        p.line([(x0, y0), (x1, y1)], w=2.0)
+    for x0, y0 in ((1.4, 4.8), (12.8, 4.8), (1.4, 13.6), (12.8, 13.6)):
+        p.rect(x0, y0, x0 + 5.8, y0 + 1.8, fill=INK_RGBA)
 
-    Drawn as branches rather than as arcs on purpose: a pair of big arcs reads as a ring, and a ring
-    at 24 px is the football two cells away. The V plus the chip keeps them apart.
-    """
-    p.line([(12, 21.8), (9.6, 17.6), (7.4, 13.4), (6.2, 8.6)], w=1.4)
-    p.line([(12, 21.8), (14.4, 17.6), (16.6, 13.4), (17.8, 8.6)], w=1.4)
-    for x, y, x2, y2 in ((9.4, 17.2, 6.8, 16.2), (7.8, 13.2, 5.2, 12.6), (6.8, 9.2, 4.4, 8.4)):
-        p.line([(x, y), (x2, y2)], w=1.2)
-        p.line([(24 - x, y), (24 - x2, y2)], w=1.2)
-    p.rect(9.6, 10.4, 14.4, 15.2, outline=INK_RGBA, w=1.3)
-    p.dot(12, 12.8, 1.2)
+
+def _icon_handshake(p):
+    """Addis: a handshake — two sleeves, a clasped hand with three finger grooves and a thumb."""
+    p.poly([(1.2, 4.4), (6.6, 7.4), (6.6, 12.4), (1.2, 9.4)], fill=INK_RGBA)
+    p.poly([(18.8, 4.4), (13.4, 7.4), (13.4, 12.4), (18.8, 9.4)], fill=INK_RGBA)
+    p.rect(6.6, 7.8, 13.4, 12.8, fill=INK_RGBA)
+    p.rect(9.0, 4.6, 11.8, 7.8, fill=INK_RGBA)          # the thumb, over the clasp
+    for x in (8.2, 10.0, 11.8):                          # three fingers, cut as grooves
+        p.line([(x, 8.4), (x, 12.6)], w=0.9, fill=CLEAR)
+
+
+def _icon_stethoscope(p):
+    """Africa's health-financing day: a stethoscope — two earpieces, tubing, a filled chest piece."""
+    p.dot(5.4, 2.4, 1.4)
+    p.dot(14.6, 2.4, 1.4)
+    p.line([(5.4, 3.0), (5.4, 7.8)], w=2.0)
+    p.line([(14.6, 3.0), (14.6, 7.8)], w=2.0)
+    p.line([(5.4, 7.8), (8.8, 11.2)], w=2.0)
+    p.line([(14.6, 7.8), (11.2, 11.2)], w=2.0)
+    p.line([(10.0, 11.2), (10.0, 13.2)], w=2.0)
+    p.ellipse(10.0, 16.0, 3.5, 3.0, fill=INK_RGBA)
+
+
+def _icon_drill_bit(p):
+    """DRC cobalt: a drill bit — a filled chuck, a fat shaft with helical slots, a point."""
+    p.rect(5.2, 1.6, 14.8, 4.6, fill=INK_RGBA)          # chuck
+    p.rect(6.8, 4.6, 13.2, 14.2, fill=INK_RGBA)         # shaft
+    p.poly([(6.8, 14.2), (13.2, 14.2), (10.0, 19.0)], fill=INK_RGBA)      # point
+    for y in (6.0, 8.8, 11.6):                          # flutes, cut on one edge only
+        p.line([(6.6, y), (9.0, y + 1.3)], w=1.1, fill=CLEAR)
+
+
+def _icon_gavel(p):
+    """Myanmar: a gavel — an L: a square mallet head top-left, a long handle, a block bottom-right."""
+    p.rect(1.8, 2.6, 8.6, 8.8, fill=INK_RGBA)
+    p.line([(2.6, 5.7), (7.8, 5.7)], w=1.2, fill=CLEAR)
+    p.line([(8.0, 8.0), (15.0, 16.6)], w=2.8)
+    p.rect(11.4, 16.4, 19.4, 19.4, fill=INK_RGBA)
 
 
 def _icon_flags_faceoff(p):
-    """India and China: two flags facing off, sparks between them."""
-    p.line([(5, 2.6), (5, 21.5)], w=1.6)
-    p.poly([(5.8, 3.6), (11.2, 5.6), (5.8, 8.2)], fill=INK_RGBA)
-    p.line([(19, 2.6), (19, 21.5)], w=1.6)
-    p.poly([(18.2, 3.6), (12.8, 5.6), (18.2, 8.2)], fill=INK_RGBA)
-    p.line([(12, 11.4), (12, 14.4)], w=1.3)
-    p.line([(10.2, 12.2), (13.8, 13.6)], w=1.3)
-    p.line([(13.8, 12.2), (10.2, 13.6)], w=1.3)
+    """India and China: two flags facing each other, sparks between the poles."""
+    p.rect(3.8, 1.6, 5.6, 18.6, fill=INK_RGBA)
+    p.poly([(5.6, 2.8), (11.6, 5.2), (5.6, 7.8)], fill=INK_RGBA)
+    p.rect(14.4, 1.6, 16.2, 18.6, fill=INK_RGBA)
+    p.poly([(14.4, 2.8), (8.4, 5.2), (14.4, 7.8)], fill=INK_RGBA)
+    p.poly([(10.0, 10.2), (11.4, 11.6), (10.0, 13.0), (8.6, 11.6)], fill=INK_RGBA)
+    p.rect(9.4, 15.4, 10.6, 19.0, fill=INK_RGBA)
 
 
 def _icon_plane_slash(p):
-    """China and Japan: a grounded aircraft with a cancelled slash across it."""
-    p.poly([(12, 21.5), (10.6, 18), (10.6, 6.2), (13.4, 6.2), (13.4, 18)], fill=INK_RGBA)
-    p.poly([(10.6, 13), (2, 7), (2, 10), (10.6, 15.4)], fill=INK_RGBA)
-    p.poly([(13.4, 13), (22, 7), (22, 10), (13.4, 15.4)], fill=INK_RGBA)
-    p.poly([(10.6, 6.2), (7, 2.4), (7, 5), (10.6, 7.6)], fill=INK_RGBA)
-    p.poly([(13.4, 6.2), (17, 2.4), (17, 5), (13.4, 7.6)], fill=INK_RGBA)
-    p.line([(3, 21), (21, 3)], w=3.2, fill=CLEAR)
-    p.line([(3, 21), (21, 3)], w=1.6, fill=ACCENT_RGBA)
+    """China and Japan: a grounded aircraft with a heavy slash struck through it."""
+    p.poly([(7.8, 19.2), (7.8, 4.6), (6.4, 2.6), (13.6, 2.6), (12.2, 4.6),
+            (12.2, 19.2)], fill=INK_RGBA)
+    p.poly([(7.8, 12.4), (1.6, 7.2), (1.6, 10.2), (7.8, 14.4)], fill=INK_RGBA)
+    p.poly([(12.2, 12.4), (18.4, 7.2), (18.4, 10.2), (12.2, 14.4)], fill=INK_RGBA)
+    p.line([(2.6, 19.0), (18.0, 1.2)], w=5.4, fill=CLEAR)
+    p.line([(2.6, 19.0), (18.0, 1.2)], w=2.8)
 
 
 def _icon_chip_arrow(p):
     """Markets: a chip with pins and an arrow climbing out of it."""
-    p.rect(6, 11.5, 18, 20.5, outline=INK_RGBA, w=1.6)
-    p.rect(9, 14.5, 15, 18.5, fill=INK_RGBA)
-    for x in (8, 12, 16):
-        p.line([(x, 11.5), (x, 9.4)], w=1.3)
-        p.line([(x, 20.5), (x, 22.6)], w=1.3)
-    p.line([(12, 8.4), (12, 3.0)], w=1.8)
-    p.poly([(9, 5.6), (15, 5.6), (12, 1.4)], fill=INK_RGBA)
+    p.rect(1.8, 8.4, 13.8, 18.4, fill=INK_RGBA)
+    p.rect(4.2, 12.6, 11.4, 14.6, fill=CLEAR)
+    for x in (4.6, 7.8, 11.0):
+        p.rect(x, 6.4, x + 1.4, 8.4, fill=INK_RGBA)
+        p.rect(x, 18.4, x + 1.4, 20.0, fill=INK_RGBA)
+    p.line([(15.8, 9.4), (15.8, 3.2)], w=2.4)
+    p.poly([(13.2, 5.4), (18.4, 5.4), (15.8, 1.0)], fill=INK_RGBA)
 
 
-def _icon_stethoscope(p):
-    """Africa's health-financing day: a stethoscope loop and chest piece."""
-    p.line([(7, 3.2), (7, 9.2)], w=1.5)
-    p.line([(17, 3.2), (17, 9.2)], w=1.5)
-    p.line([(7, 9.2), (10.4, 12.6)], w=1.5)
-    p.line([(17, 9.2), (13.6, 12.6)], w=1.5)
-    p.dot(7, 2.6, 1.2)
-    p.dot(17, 2.6, 1.2)
-    p.ellipse(12, 15.4, 4.6, 4.4, outline=INK_RGBA, w=1.5)
-    p.dot(12, 21.0, 1.7)
+def _icon_coin_stack(p):
+    """Trump's stake: a rising stack of coins with an arrow climbing beside it."""
+    for cy in (16.4, 13.0, 9.6):
+        p.ellipse(6.6, cy, 4.4, 2.2, fill=INK_RGBA)
+    p.line([(13.4, 17.2), (17.8, 5.4)], w=2.2)
+    p.poly([(15.4, 6.2), (19.6, 3.4), (19.4, 8.2)], fill=INK_RGBA)
 
 
-def _icon_drill_crate(p):
-    """DRC cobalt: a drill bit over a crate of ore."""
-    p.poly([(2.4, 2.4), (7.6, 2.4), (6.0, 9.2), (4.0, 9.2)], fill=INK_RGBA)
-    p.line([(3.2, 4.6), (6.6, 6.4)], w=1.1, fill=CLEAR)
-    p.line([(4.0, 7.4), (6.0, 8.6)], w=1.1, fill=CLEAR)
-    p.rect(12.4, 12.4, 22, 21.6, outline=INK_RGBA, w=1.5)
-    p.line([(12.4, 15.6), (22, 15.6)], w=1.2)
-    p.line([(12.4, 18.6), (22, 18.6)], w=1.2)
+def _icon_crossed_box(p):
+    """Megaspeed: a box struck out — a filled crate with an X cut clean through it."""
+    p.rect(2.2, 4.6, 15.4, 17.8, fill=INK_RGBA)
+    p.line([(3.2, 5.6), (14.4, 16.8)], w=3.0, fill=CLEAR)
+    p.line([(14.4, 5.6), (3.2, 16.8)], w=3.0, fill=CLEAR)
+    p.rect(16.6, 4.6, 18.0, 17.8, fill=INK_RGBA)
 
 
-def _icon_gavel(p):
-    """Myanmar: a gavel, after the ICJ ruling."""
-    p.poly([(7.4, 2.4), (12.0, 7.0), (9.0, 10.0), (4.4, 5.4)], fill=INK_RGBA)
-    p.line([(9.2, 10.2), (16.0, 17.0)], w=2.2)
-    p.rect(12.4, 19.4, 21.6, 21.8, fill=INK_RGBA)
-    p.line([(18.6, 2.8), (21.6, 5.8)], w=1.2)
+def _icon_falling_bar(p):
+    """Gold: a falling bar — three bars stepping down off an axis."""
+    p.rect(2.4, 2.2, 4.0, 18.4, fill=INK_RGBA)
+    p.rect(2.4, 16.8, 18.6, 18.4, fill=INK_RGBA)
+    p.rect(6.2, 4.4, 9.4, 16.8, fill=INK_RGBA)
+    p.rect(10.8, 8.4, 14.0, 16.8, fill=INK_RGBA)
+    p.rect(15.4, 12.2, 18.6, 16.8, fill=INK_RGBA)
 
 
 def _icon_hemicycle(p):
-    """Strasbourg: a parliament hemicycle, three tiers of seats on a floor line."""
-    p.arc(12, 17.2, 9.6, 9.6, 200, 340, w=1.5)
-    p.arc(12, 17.2, 6.6, 6.6, 200, 340, w=1.5)
-    p.arc(12, 17.2, 3.6, 3.6, 200, 340, w=1.5)
-    p.line([(2.4, 17.2), (21.6, 17.2)], w=1.5)
+    """Strasbourg: a parliament hemicycle — three tiers of seats on a floor line."""
+    p.arc(10.0, 15.6, 7.6, 7.6, 200, 340, w=2.0)
+    p.arc(10.0, 15.6, 5.0, 5.0, 200, 340, w=2.0)
+    p.arc(10.0, 15.6, 2.4, 2.4, 200, 340, w=2.0)
+    p.rect(1.8, 15.6, 18.2, 17.2, fill=INK_RGBA)
+    for x in (5.0, 7.5, 10.0, 12.5, 15.0):
+        p.dot(x, 8.0 + abs(x - 10.0) * 0.55, 0.9)
 
 
 def _icon_pylon(p):
-    """Cuba: a power pylon, the grid that keeps failing."""
-    p.line([(6.0, 22.0), (10.4, 3.0)], w=1.6)
-    p.line([(18.0, 22.0), (13.6, 3.0)], w=1.6)
-    p.line([(10.4, 3.0), (13.6, 3.0)], w=1.6)
-    p.line([(3.4, 8.0), (20.6, 8.0)], w=1.6)
-    p.line([(5.4, 13.6), (18.6, 13.6)], w=1.5)
-    p.line([(7.4, 17.2), (16.6, 17.2)], w=1.3)
-    p.line([(8.6, 17.2), (15.2, 13.6)], w=1.1)
+    """Cuba: a power pylon — two legs, three crossarms, a brace, a sill."""
+    p.line([(4.0, 19.2), (8.2, 2.6)], w=2.2)
+    p.line([(16.0, 19.2), (11.8, 2.6)], w=2.2)
+    p.line([(8.2, 2.6), (11.8, 2.6)], w=2.2)
+    p.line([(1.6, 6.6), (18.4, 6.6)], w=2.2)
+    p.line([(3.2, 11.0), (16.8, 11.0)], w=2.2)
+    p.line([(5.0, 14.8), (15.0, 14.8)], w=2.0)
+    p.line([(6.4, 14.8), (12.8, 11.0)], w=1.6)
 
 
 def _icon_ballot(p):
-    """Venezuela: a ballot paper going into a box."""
-    p.rect(8, 2.4, 16, 10.2, fill=INK_RGBA)
-    p.line([(9.6, 6.6), (11.6, 8.6), (14.6, 4.2)], w=1.3, fill=CLEAR)
-    p.rect(3.4, 10.8, 20.6, 22, outline=INK_RGBA, w=1.6)
-    p.line([(8.0, 14.4), (16.0, 14.4)], w=1.8)
+    """Venezuela: a ballot going into a box — a filled slip with a tick, over a filled box."""
+    p.rect(6.6, 0.6, 13.4, 11.0, fill=INK_RGBA)
+    p.line([(8.2, 4.6), (9.8, 6.2), (12.2, 2.6)], w=1.4, fill=CLEAR)
+    p.rect(1.2, 9.6, 18.8, 18.6, fill=INK_RGBA)
+    p.rect(7.0, 11.0, 13.0, 12.6, fill=CLEAR)
 
 
-def _icon_bars_rising(p):
-    """US consumer confidence: three rising bars on an axis."""
-    p.line([(3.2, 3.0), (3.2, 21.4)], w=1.5)
-    p.line([(3.2, 21.4), (21.4, 21.4)], w=1.5)
-    p.rect(6.0, 14.0, 9.4, 21.0, fill=INK_RGBA)
-    p.rect(11.0, 10.0, 14.4, 21.0, fill=INK_RGBA)
-    p.rect(16.0, 5.6, 19.4, 21.0, fill=INK_RGBA)
+def _icon_gavel_bar(p):
+    """Gomez: a gavel over the bar — a long bar, a mallet head above it, a short handle."""
+    p.rect(1.6, 13.6, 18.4, 16.6, fill=INK_RGBA)
+    p.poly([(6.8, 3.2), (13.2, 3.2), (14.8, 4.8), (14.8, 7.6), (13.2, 9.2), (6.8, 9.2),
+            (5.2, 7.6), (5.2, 4.8)], fill=INK_RGBA)
+    p.rect(9.2, 9.2, 10.8, 13.6, fill=INK_RGBA)
+
+
+def _icon_burst(p):
+    """Iowa: a detonation burst — an irregular nine-spike blast, solid, cracked through."""
+    pts = []
+    spikes = (9.8, 6.4, 9.2, 5.8, 10.0, 6.6, 9.0, 6.0, 9.6)
+    for i in range(18):
+        a = math.radians(-84 + i * 20)
+        r = spikes[(i // 2) % len(spikes)] if i % 2 == 0 else 4.6
+        pts.append((10.0 + r * math.cos(a), 10.2 + r * math.sin(a)))
+    p.poly(pts, fill=INK_RGBA)
+    p.line([(7.4, 8.2), (10.4, 11.0), (8.8, 13.4)], w=1.1, fill=CLEAR)
+    p.line([(12.6, 8.6), (10.6, 12.0)], w=1.1, fill=CLEAR)
+
+
+def _icon_letter(p):
+    """Hegseth: a resignation letter — a filled envelope, its flap cut as a V."""
+    p.rect(1.8, 4.4, 18.2, 16.6, fill=INK_RGBA)
+    p.poly([(4.0, 6.2), (16.0, 6.2), (10.0, 12.0)], fill=CLEAR)
+    p.line([(4.0, 14.8), (8.6, 10.6)], w=1.4, fill=CLEAR)
+    p.line([(16.0, 14.8), (11.4, 10.6)], w=1.4, fill=CLEAR)
+
+
+def _icon_doorway(p):
+    """Gomez's seat: a doorway — a heavy frame, the opening cut clear, a leaf standing ajar."""
+    p.rect(3.2, 1.6, 16.8, 19.0, fill=INK_RGBA)
+    p.rect(5.4, 3.8, 14.6, 19.0, fill=CLEAR)
+    p.poly([(9.0, 3.8), (14.6, 5.8), (14.6, 19.0), (9.0, 19.0)], fill=INK_RGBA)
+    p.ellipse(13.2, 11.2, 0.9, 0.9, fill=CLEAR)
 
 
 def _icon_trophy(p):
-    """FIFA's congress: a trophy."""
-    p.poly([(7, 3), (17, 3), (16, 11), (12, 14), (8, 11)], fill=INK_RGBA)
-    p.arc(7, 6.4, 3.2, 3.2, 90, 270, w=1.4)
-    p.arc(17, 6.4, 3.2, 3.2, -90, 90, w=1.4)
-    p.line([(12, 14), (12, 18.4)], w=2.0)
-    p.rect(8, 18.4, 16, 21.6, fill=INK_RGBA)
-
-
-def _icon_football(p):
-    """Ronaldo's 987th: a football — heavy rim, a large centre pentagon, five seams to the rim."""
-    p.ellipse(12, 12, 9.0, 9.0, outline=INK_RGBA, w=1.8)
-    pent = [(12 + 5.4 * math.cos(math.radians(-90 + i * 72)),
-             12 + 5.4 * math.sin(math.radians(-90 + i * 72))) for i in range(5)]
-    p.poly(pent, fill=INK_RGBA)
-    for x, y in pent:
-        p.line([(x, y), (12 + (x - 12) * 1.62, 12 + (y - 12) * 1.62)], w=1.5)
-
-
-def _icon_moon_ring(p):
-    """The Beaver Moon: a small solid disc, three craters, a wide thin halo — not a ball."""
-    p.ellipse(12, 12, 6.8, 6.8, fill=INK_RGBA)
-    p.dot(10.2, 10.4, 1.4, fill=CLEAR)
-    p.dot(13.9, 13.6, 1.0, fill=CLEAR)
-    p.dot(13.4, 9.4, 0.7, fill=CLEAR)
-    p.ellipse(12, 12, 10.0, 10.0, outline=INK_RGBA, w=1.2)
-
-
-def _icon_barrel_rising(p):
-    """Oil: a barrel with Brent's line climbing out of it."""
-    p.rect(3, 9.5, 11, 21, outline=INK_RGBA, w=1.5)
-    p.line([(3, 13), (11, 13)], w=1.3)
-    p.line([(3, 17.5), (11, 17.5)], w=1.3)
-    p.line([(4.2, 20.2), (8.2, 15.6), (13.2, 17.2), (20.4, 4.2)], w=1.4)
-    p.poly([(20.6, 1.4), (17.6, 6.4), (23.0, 6.0)], fill=INK_RGBA)
+    """FIFA: a trophy — a filled cup, two handles, a stem and a plinth."""
+    p.poly([(5.6, 2.4), (14.4, 2.4), (13.4, 9.4), (10.0, 12.6), (6.6, 9.4)], fill=INK_RGBA)
+    p.arc(5.4, 5.4, 3.0, 3.0, 90, 270, w=2.0)
+    p.arc(14.6, 5.4, 3.0, 3.0, -90, 90, w=2.0)
+    p.rect(8.8, 12.6, 11.2, 16.2, fill=INK_RGBA)
+    p.rect(5.8, 16.2, 14.2, 18.8, fill=INK_RGBA)
 
 
 ICONS = {
     "tower_blast": _icon_tower_blast,
     "shield": _icon_shield,
+    "toxic_drum": _icon_toxic_drum,
+    "torn_document": _icon_torn_document,
     "window_broken": _icon_window_broken,
+    "body_tag": _icon_body_tag,
+    "toy": _icon_toy,
+    "gate": _icon_gate,
+    "ship_blast": _icon_ship_blast,
     "arrows_meet": _icon_arrows_meet,
-    "jet_zone": _icon_jet_zone,
-    "laurel_nodes": _icon_laurel_nodes,
+    "jet_dash": _icon_jet_dash,
+    "drone": _icon_drone,
+    "handshake": _icon_handshake,
+    "stethoscope": _icon_stethoscope,
+    "drill_bit": _icon_drill_bit,
+    "gavel": _icon_gavel,
     "flags_faceoff": _icon_flags_faceoff,
     "plane_slash": _icon_plane_slash,
     "chip_arrow": _icon_chip_arrow,
-    "stethoscope": _icon_stethoscope,
-    "drill_crate": _icon_drill_crate,
-    "gavel": _icon_gavel,
+    "coin_stack": _icon_coin_stack,
+    "crossed_box": _icon_crossed_box,
+    "falling_bar": _icon_falling_bar,
     "hemicycle": _icon_hemicycle,
     "pylon": _icon_pylon,
     "ballot": _icon_ballot,
-    "bars_rising": _icon_bars_rising,
+    "gavel_bar": _icon_gavel_bar,
+    "burst": _icon_burst,
+    "letter": _icon_letter,
+    "doorway": _icon_doorway,
     "trophy": _icon_trophy,
-    "football": _icon_football,
-    "moon_ring": _icon_moon_ring,
-    "barrel_rising": _icon_barrel_rising,
 }
 
 
 def render_icon(name, px=ICON_UNITS):
-    """One glyph, drawn in a 24-unit box at 4x, downsampled once to px. RGBA, its own alpha mask."""
+    """One glyph, drawn in a 20-unit box at 4x, downsampled once to px. RGBA, its own alpha mask."""
     try:
         fn = ICONS[name]
     except KeyError:
@@ -936,8 +1062,8 @@ def draw_pictogram(name, box, idx):
 # --------------------------------------------------------------------------------------------
 
 def cell_rect(idx):
-    """(x, y, w, h) of cell idx on the 4 x 5 measure, row-major from the top left."""
-    col, row = idx % 4, idx // 4
+    """(x, y, w, h) of cell idx on the 5 x 6 measure, row-major from the top left."""
+    col, row = idx % 5, idx // 5
     return (GRID_X0 + col * (COL_W + COL_GUT), GRID_TOP + row * (ROW_H + ROW_GUT), COL_W, ROW_H)
 
 
@@ -948,6 +1074,7 @@ def cell_rect(idx):
 def build():
     global _IMG, _DRAW
     ITEMS.clear()
+    DRAWN_LABELS.clear()
 
     img = make_paper()
     draw = ImageDraw.Draw(img)
@@ -961,7 +1088,7 @@ def build():
     # anchor "mt" is the ascender top, which sits 13 px above the cap ink at 62 px; y = 39 puts
     # the real ink at 52..99, centred in the 34..118 space between the two rules.
     f_mast = font(FONT_SERIF, 62)
-    draw_tracked(draw, MASTHEAD, f_mast, 4.0, PAGE / 2, 39, INK, anchor="mt",
+    draw_tracked(draw, MASTHEAD, f_mast, 5.0, PAGE / 2, 39, INK, anchor="mt",
                  name="masthead", face="DejaVu Serif Bold")
 
     # ---- the heavy rule under the masthead --------------------------------------------
@@ -971,19 +1098,19 @@ def build():
     # ---- date bar: filled ink, date left, the count right ------------------------------
     y, h = BAND_DATEBAR
     band(draw, y, h, INK, name="datebar")
-    f_date = font(FONT_ANTON, 30)
-    draw_tracked(draw, DATE_TEXT, f_date, 2.0, X0 + 14, y + 31, WHITE, anchor="ls",
+    f_date = font(FONT_ANTON, 26)
+    draw_tracked(draw, DATE_TEXT, f_date, 2.0, X0 + 14, y + 28, WHITE, anchor="ls",
                  name="date", face="Anton")
-    f_meta = font(FONT_MONO, 13, weight=400)
-    draw_tracked(draw, DATE_META, f_meta, 1.6, X1 - 14, y + 31, WHITE, anchor="rs",
+    f_meta = font(FONT_MONO, 12, weight=400)
+    draw_tracked(draw, DATE_META, f_meta, 1.6, X1 - 14, y + 28, WHITE, anchor="rs",
                  name="date_meta", face="Ubuntu Mono")
 
     # ---- the lead band, left column ---------------------------------------------------
-    f_ltag = font(FONT_MONO, 11, weight=400)
+    f_ltag = font(FONT_MONO, 10, weight=400)
     draw_tracked(draw, LEAD["tag"], f_ltag, 2.6, LEAD_TEXT_X, LEAD_TAG_BASE, ACCENT,
                  anchor="ls", name="lead_tag", face="Ubuntu Mono")
 
-    f_hl = font(FONT_ANTON, 38)
+    f_hl = font(FONT_ANTON, 34)
     for i, line in enumerate(LEAD["headline"]):
         box, w = draw_tracked(draw, line, f_hl, -0.8, LEAD_TEXT_X, LEAD_BASE[i], INK,
                               anchor="ls", name="lead_l%d" % (i + 1), face="Anton")
@@ -991,7 +1118,7 @@ def build():
             raise SystemExit("headline line %d is %.1f px wide in a %d px column: %r"
                              % (i + 1, w, LEAD_TEXT_W, line))
 
-    f_deck = font(FONT_SERIF_R, 19)
+    f_deck = font(FONT_SERIF_R, 18)
     for i, line in enumerate(LEAD["deck"]):
         box, w = draw_tracked(draw, line, f_deck, -0.2, LEAD_TEXT_X, DECK_BASE[i], INK,
                               anchor="ls", name="deck_l%d" % (i + 1), face="DejaVu Serif")
@@ -999,7 +1126,7 @@ def build():
             raise SystemExit("deck line %d is %.1f px wide in a %d px column: %r"
                              % (i + 1, w, LEAD_TEXT_W, line))
 
-    f_loc = font(FONT_MONO, 11, weight=400)
+    f_loc = font(FONT_MONO, 10, weight=400)
     draw_tracked(draw, LEAD["locative"], f_loc, 2.4, LEAD_TEXT_X, LOCATIVE_BASE, ACCENT,
                  anchor="ls", name="locative", face="Ubuntu Mono")
 
@@ -1007,17 +1134,23 @@ def build():
     draw_lead_panel(PANEL_BOX)
 
     # ---- the grid --------------------------------------------------------------------
+    f_tag = font(FONT_MONO, 8, weight=400)
+    f_lbl = font(FONT_ANTON, 12)
+    f_tea = font(FONT_MONO, 8, weight=400)
+    # ink at 68 %: the teaser is the cell's second voice, so it is set in a lighter ink
+    teaser_ink = tuple(int(round(PAPER[i] * 0.32 + INK[i] * 0.68)) for i in range(3))
+
     for idx, (tag, key, label, teaser) in enumerate(CELLS):
         cx, cy, cw, ch = cell_rect(idx)
 
-        f_tag = font(FONT_MONO, 9, weight=400)
-        draw_tracked(draw, tag, f_tag, 1.2, cx, cy + TAG_BASE, ACCENT, anchor="ls",
+        draw_tracked(draw, tag, f_tag, 1.0, cx, cy + TAG_BASE, ACCENT, anchor="ls",
                      name="tag:%02d" % idx, face="Ubuntu Mono")
 
         draw_pictogram(key, (cx, cy + ICON_TOP, cx + ICON, cy + ICON_TOP + ICON), idx)
 
-        f_lbl = font(FONT_ANTON, 15)
-        for li, line in enumerate(wrap_label(label)):
+        lines = wrap_label(label)
+        DRAWN_LABELS[idx] = lines
+        for li, line in enumerate(lines):
             base = cy + LBL_BASE1 + li * LBL_DY
             box, w = draw_tracked(draw, line, f_lbl, -0.3, cx, base, INK, anchor="ls",
                                   name="label:%02d:%d" % (idx, li + 1), face="Anton")
@@ -1028,10 +1161,9 @@ def build():
         hairline(draw, cy + TEA_RULE_DY, x0=cx, x1=cx + cw, name="rule:teaser:%02d" % idx,
                  fill=GUTTER_RULE)
 
-        f_tea = font(FONT_MONO, 9.5, weight=400)
-        # ink at 70 %: the teaser is the cell's second voice, so it is set in a lighter ink
-        teaser_ink = tuple(int(round(PAPER[i] * 0.30 + INK[i] * 0.70)) for i in range(3))
-        box, w = draw_tracked(draw, teaser, f_tea, 0.9, cx, cy + TEA_BASE, teaser_ink,
+        if len(teaser) > TEASER_CHARS:
+            raise SystemExit("teaser over %d characters: %r" % (TEASER_CHARS, teaser))
+        box, w = draw_tracked(draw, teaser, f_tea, 0.5, cx, cy + TEA_BASE, teaser_ink,
                               anchor="ls", name="teaser:%02d" % idx, face="Ubuntu Mono")
         if box[2] > cx + cw:
             raise SystemExit("teaser overruns cell %d: %r right edge %.1f > %d"
@@ -1054,20 +1186,20 @@ def build():
 
 def draw_grid_rules():
     """
-    A hairline above every cell, and a 1 px vertical rule in each of the three column gutters.
+    A hairline above every cell, and a 1 px vertical rule in each of the four column gutters.
     Both live strictly inside the gutters, so no rule ever crosses a cell or another rule.
     """
     draw = _DRAW
 
-    # one rule above each cell, in the row gutter (row 0's sits above the band, at y 440)
+    # one rule above each cell, in the row gutter (row 0's sits above the band, at y 407)
     for idx in range(len(CELLS)):
         cx, cy, cw, ch = cell_rect(idx)
-        hairline(draw, cy - 4, x0=cx, x1=cx + cw, name="rule:cell:%02d" % idx, fill=GUTTER_RULE)
+        hairline(draw, cy - 3, x0=cx, x1=cx + cw, name="rule:cell:%02d" % idx, fill=GUTTER_RULE)
 
-    # the three column gutters, full height of the grid
+    # the four column gutters, full height of the grid
     top = GRID_TOP
     bot = GRID_TOP + GRID_H
-    for g in range(1, 4):
+    for g in range(1, 5):
         x = GRID_X0 + g * COL_W + (g - 1) * COL_GUT + COL_GUT // 2
         draw.rectangle([x, top, x, bot - 1], fill=GUTTER_RULE)
         register("rule:gutter:%d" % g, (x, top, x + 1, bot), "rule")
@@ -1130,7 +1262,7 @@ def count_collisions():
 
 
 def check_layout():
-    # 0. no text below the 9 px floor
+    # 0. no text below the 8 px floor
     for it in ITEMS:
         if it["kind"] == "text" and it["size"] is not None and it["size"] < MIN_TEXT:
             raise SystemExit("text below the %g px floor: %s at %g px"
@@ -1170,6 +1302,38 @@ def smallest_gap(with_type=True):
         if with_type and not (a["kind"] == "text" or b["kind"] == "text"):
             continue
         if _overlap(a["box"], b["box"]):
+            continue
+        g = _separation(a["box"], b["box"])
+        if g < best[2]:
+            best = (a["name"], b["name"], g)
+    return best
+
+
+def _same_label_block(a, b):
+    """
+    True when two boxes belong to the same cell's furniture — two lines of one label, or the
+    hairline that is drawn deliberately 1 px above its own teaser. Those are composition, not
+    spacing between blocks, so the block-to-block measure ignores them.
+    """
+    def cell_of(name):
+        parts = name.split(":")
+        if parts[0] in ("label", "teaser", "tag", "icon"):
+            return parts[1]
+        if parts[0] == "rule" and len(parts) > 2 and parts[1] in ("teaser", "cell"):
+            return parts[2]
+        return None
+
+    ca, cb = cell_of(a), cell_of(b)
+    return ca is not None and ca == cb
+
+
+def smallest_gap_between_blocks():
+    """The tightest gap between two *different* blocks, ignoring leading inside one label."""
+    best = (None, None, 1e9)
+    for a, b in pairs_checked():
+        if _overlap(a["box"], b["box"]):
+            continue
+        if _same_label_block(a["name"], b["name"]):
             continue
         g = _separation(a["box"], b["box"])
         if g < best[2]:
@@ -1243,22 +1407,62 @@ def icon_ink_counts(img):
     return out
 
 
+def icon_masks():
+    return {key: np.asarray(render_icon(key, ICON).split()[-1], dtype=np.float32) > 40.0
+            for key in ICONS}
+
+
+def _coarse(mask, n=10):
+    """An n x n occupancy bitmap: which tenths of the glyph are more than half ink."""
+    out = np.zeros((n, n), dtype=bool)
+    for i in range(n):
+        for j in range(n):
+            blk = mask[int(i * mask.shape[0] / n):int((i + 1) * mask.shape[0] / n),
+                       int(j * mask.shape[1] / n):int((j + 1) * mask.shape[1] / n)]
+            out[i, j] = blk.mean() > 0.5
+    return out
+
+
 def icon_distinctness():
-    """IoU between every pair of glyph masks at 24 px. Two glyphs must not be the same drawing."""
-    masks = {}
-    for key in ICONS:
-        a = np.asarray(render_icon(key, ICON).split()[-1], dtype=np.float32) > 40.0
-        masks[key] = a
-    worst = (None, None, 0.0)
-    for i, a in enumerate(sorted(masks)):
-        for b in sorted(masks)[i + 1:]:
+    """
+    Two measures over every pair of glyph masks at 20 px, because one alone is misleading:
+
+      * IoU. Two *different* glyphs that both fill a 20 px box score around 0.55-0.60 simply
+        because they share the middle of the box; a duplicated drawing scores 1.000. The gate is
+        0.70, which only a copy can reach.
+      * a 10 x 10 occupancy bitmap and the Hamming distance between two of them. This is the
+        "same shape at a glance" test: a copy scores 0/100, two distinct drawings differ in at
+        least a sixth of the grid. The floor is 8/100.
+    """
+    masks = icon_masks()
+    coarse = {k: _coarse(v) for k, v in masks.items()}
+    worst = (None, None, 0.0, 100)
+    names = sorted(masks)
+    for i, a in enumerate(names):
+        for b in names[i + 1:]:
             ma, mb = masks[a], masks[b]
             union = float((ma | mb).sum())
             inter = float((ma & mb).sum())
             iou = inter / union if union else 0.0
+            ham = int((coarse[a] != coarse[b]).sum())
             if iou > worst[2]:
-                worst = (a, b, iou)
+                worst = (a, b, iou, ham)
     return worst
+
+
+def icon_solid_mass(mask, k=4):
+    """Largest fully-inked k x k block in the mask. The brief asks for at least one 4 x 4."""
+    m = mask.astype(np.int32)
+    integ = np.zeros((m.shape[0] + 1, m.shape[1] + 1), dtype=np.int32)
+    integ[1:, 1:] = m.cumsum(0).cumsum(1)
+    best = 0
+    h, w = m.shape
+    for y in range(h - k + 1):
+        for x in range(w - k + 1):
+            s = (integ[y + k, x + k] - integ[y, x + k] - integ[y + k, x] + integ[y, x])
+            if s > best:
+                best = int(s)
+    return best      # k*k == 16 means a solid 4 x 4 exists
 
 
 def md5_of(path):
@@ -1292,8 +1496,9 @@ def report(img, out, size_bytes):
         ("footer bar", BAND_FOOTBAR),
     ]:
         print("  %-14s y=%4d  h=%3d   ends %4d" % (name, y, h, y + h))
-    print("  %-14s y=%4d  h=%3d   ends %4d   (the brief's 978..1000 crosses the %d px margin"
-          " by %d px)" % ("brief footer", 978, 22, 1000, EDGE, 1000 - (PAGE - EDGE)))
+    print("  %-14s y=%4d  h=%3d   ends %4d   (the brief's 966..1000 crosses the %d px margin"
+          " by %d px, so the bar ends at %d)"
+          % ("brief footer", 966, 34, 1000, EDGE, 1000 - (PAGE - EDGE), PAGE - EDGE))
 
     print("\nLAYOUT ARITHMETIC")
     print("  content           x %d..%d = %d wide" % (X0, X1, CONTENT_W))
@@ -1301,42 +1506,84 @@ def report(img, out, size_bytes):
           % (LEAD_TEXT_X, LEAD_TEXT_X + LEAD_TEXT_W, LEAD_TEXT_W,
              PANEL_BOX[0] - (LEAD_TEXT_X + LEAD_TEXT_W), PANEL_BOX[0], PANEL_BOX[2],
              PANEL_BOX[2] - PANEL_BOX[0], PANEL_BOX[3] - PANEL_BOX[1]))
-    print("  grid width        4 x %d + 3 x %d = %d, centred in %d -> x %d..%d (%d px of air"
+    print("  grid width        5 x %d + 4 x %d = %d, centred in %d -> x %d..%d (%d px of air"
           " split %d/%d)"
           % (COL_W, COL_GUT, GRID_W, CONTENT_W, GRID_X0, GRID_X0 + GRID_W,
              CONTENT_W - GRID_W, (CONTENT_W - GRID_W) // 2, (CONTENT_W - GRID_W) // 2))
-    print("  grid height       5 x %d + 4 x %d = %d  ->  y %d..%d"
+    print("  grid height       6 x %d + 5 x %d = %d  ->  y %d..%d  (the brief's 410..956)"
           % (ROW_H, ROW_GUT, GRID_H, GRID_TOP, GRID_TOP + GRID_H))
-    print("                    the brief's 444..968 assumes 5 x (96+8) = 520; the stated cell"
-          " arithmetic gives %d, so the band ends %d px higher and the slack sits above the"
-          " footer" % (GRID_H, 968 - (GRID_TOP + GRID_H)))
-    print("  cell               %d x %d, gutter %d both ways, %d cells"
-          % (COL_W, ROW_H, COL_GUT, len(CELLS)))
+    print("  cell              %d x %d, gutter %d across / %d down, %d cells (5 x 6)"
+          % (COL_W, ROW_H, COL_GUT, ROW_GUT, len(CELLS)))
+
+    f_hl = font(FONT_ANTON, 34)
+    print("  lead headline     Anton 34 in the %d px column: line 1 %.1f, line 2 %.1f, line 3"
+          " %.1f" % (LEAD_TEXT_W,
+                     tracked_width(LEAD["headline"][0], f_hl, -0.8),
+                     tracked_width(LEAD["headline"][1], f_hl, -0.8),
+                     tracked_width(LEAD["headline"][2], f_hl, -0.8)))
+    print("                    the brief asks for two lines, but its second line"
+          " (\"AS IRAN'S ECONOMY GOES \\\"UNDERWATER\\\"\") measures %.1f px at 34 px — %.1f px"
+          " wider than the column. The size is kept and the line is broken at the word boundary"
+          " before the quoted word, so the lead sets in three lines; the two-line alternative"
+          " needs %.0f px, which is the trade printed rather than taken."
+          % (tracked_width("AS IRAN'S ECONOMY GOES \"UNDERWATER\"", f_hl, -0.8),
+             tracked_width("AS IRAN'S ECONOMY GOES \"UNDERWATER\"", f_hl, -0.8) - LEAD_TEXT_W,
+             _size_for("AS IRAN'S ECONOMY GOES \"UNDERWATER\"", LEAD_TEXT_W)))
+
     scaled, frame = panel_frame()
     sx = scaled[0] / float(PANEL_NATIVE[0])
     print("  lead panel        native %d x %d, scaled uniformly to %d x %d (%.3f), framed %r"
           % (PANEL_NATIVE[0], PANEL_NATIVE[1], scaled[0], scaled[1], sx, frame))
     print("                    the frame reads source x %.0f..%.0f of %d: both headlands"
           " (286..414, 582..668), the tanker (330..600), the drone (754..794) and the first"
-          " three hulls (714..~800) are inside; the foreground shore (0..268) falls outside,"
-          " which is the cost of a 1.88:1 box on a 3.33:1 scene"
-          % (frame[0] / sx, frame[2] / sx, PANEL_NATIVE[0]))
+          " three hulls (714..~820) are inside; the foreground shore (0..268) and the two"
+          " outermost hulls (846..918) fall outside, which is the cost of a 2.10:1 box on a"
+          " 3.33:1 scene" % (frame[0] / sx, frame[2] / sx, PANEL_NATIVE[0]))
+
+    print("\nCELL ARITHMETIC  (the brief's 86 px budget, measured from the fonts, not guessed)")
+    budget = [
+        ("tag ink", 6, "mono 8, baseline +%d: ink y+%d..y+%d" % (TAG_BASE, TAG_BASE - 6, TAG_BASE)),
+        ("gap", 3, "%d -> %d" % (TAG_BASE, ICON_TOP)),
+        ("pictogram", ICON, "y+%d..y+%d" % (ICON_TOP, ICON_TOP + ICON)),
+        ("gap", 3, "%d -> %d" % (ICON_TOP + ICON, LBL_BASE1 - 10)),
+        ("label, 3 lines", 35, "Anton 12: ink y+%d..y+%d, 11 px ink, %d px advance, 1 px air"
+                               % (LBL_BASE1 - 10, LBL_BASE1 + 2 * LBL_DY + 1, LBL_DY)),
+        ("gap", 3, "%d -> %d" % (LBL_BASE1 + 2 * LBL_DY + 1, TEA_RULE_DY)),
+        ("rule", 1, "y+%d" % TEA_RULE_DY),
+        ("gap", TEA_BASE - 6 - (TEA_RULE_DY + 1), "%d -> %d" % (TEA_RULE_DY + 1, TEA_BASE - 6)),
+        ("teaser ink", 6, "mono 8, baseline +%d: ink y+%d..y+%d" % (TEA_BASE, TEA_BASE - 6, TEA_BASE)),
+    ]
+    total = 0
+    for what, px, note in budget:
+        total += px
+        print("  %-16s %2d px   %s" % (what, px, note))
+    print("  %-16s %2d px   of %d  ->  %d px of air (2 above the tag, %d below the teaser)"
+          % ("TOTAL", total, ROW_H, ROW_H - total, ROW_H - total - 2))
+    print("  %-16s %2d px   %s"
+          % ("worst case", total + 2, "the two cells whose teaser carries a comma (\"UN: 1,600"
+             " DEAD\", \"CPHIA, 23-27 NOV\") drop 2 px below the baseline, so the real ceiling is"
+             " %d of %d" % (total + 2, ROW_H)))
+    if total + 2 > ROW_H:
+        raise SystemExit("cell budget overflows: %d > %d" % (total + 2, ROW_H))
 
     print("\nSTORIES  (the brief's [2])")
     print("  stories on page   %d  (1 lead + %d cells)" % (STORY_COUNT, len(CELLS)))
     print("  distinct tags     %d  -> %s" % (len(FIELDS), " · ".join(FIELDS)))
     print("  date bar prints   %r" % DATE_META)
-    print("  note              the brief's date bar says \"21 STORIES · 11 FIELDS\"; its own 20-cell"
-          " table carries %d distinct region tags and its verify step defines the field count as"
-          " distinct region tags, so the bar prints the measured %d" % (len(FIELDS), len(FIELDS)))
-    print("  sourcing          every word traces to ../facts2.md or to the brief's own table."
-          " Two teasers in that table are not in facts2.md: \"EIA RAISES FORECAST\" traces to"
-          " facts.md line 41 and facts3.md line 13, and \"SEOUL SCRAMBLES\" is the brief's"
-          " characterisation of a KADIZ incursion that facts2.md reports as an incursion only."
-          " Both are drawn because the brief gives them verbatim; neither is invented here.")
-    print("  CUT list          nothing from facts2.md's CUT list is on the page: no Comey or"
+    print("  note              the brief's date bar shows \"30 STORIES · 17 FIELDS\", but its own"
+          " verify step defines the count as 30 cells + 1 lead = 31, and tells this pass to"
+          " compute the field count from the data. Measured: 31 stories, %d distinct region tags."
+          " The bar prints the measured pair rather than a figure the page contradicts."
+          % len(FIELDS))
+    print("  sourcing          every word traces to ../facts3.md or to the brief's own table."
+          " One label is a conflation in the brief and is drawn verbatim: cell 20 says"
+          " \"TRUMP STAKE UP $15M\", while facts3.md story 20 says the *net worth* rose by up to"
+          " $15 million on Monday and the *stake* had grown to as much as $62 million. Kept as"
+          " the brief gives it; flagged here rather than silently rewritten.")
+    print("  CUT list          nothing from facts3.md's CUT list is on the page: no Comey or"
           " James indictments, no Houston tornado, no Geneva plan, no Cape Verde, no COP31, no"
-          " Nasdaq rebound, no Beltran Leyva, no Niger state, no rival-title-only claims.")
+          " Nasdaq rebound, no Beltran Leyva, no Niger state, no rival-title-only claims, no"
+          " Sikkim earthquake.")
 
     print("\nTEXT BLOCKS  (the brief's [4]: width and right edge, every block)")
     texts = sorted([it for it in ITEMS if it["kind"] == "text"],
@@ -1371,6 +1618,26 @@ def report(img, out, size_bytes):
     if over:
         raise SystemExit("%d cell(s) spill into a neighbour" % over)
 
+    print("\nLABEL INTEGRITY  (the brief's [4]: drawn text == source text, wrapped only at spaces)")
+    bad = 0
+    for idx, (tag, key, label, teaser) in enumerate(CELLS):
+        lines = DRAWN_LABELS[idx]
+        drawn = " ".join(lines)
+        src = " ".join(label.split())
+        same = drawn == src
+        bad += 0 if same else 1
+        print("  %2d  src %-26r %d line(s)  %-34r %s"
+              % (idx + 1, label, len(lines), "/".join(lines), "MATCH" if same else "TRUNCATED"))
+    print("  labels whose drawn text differs from the source: %d  (0 = nothing truncated)"
+          % bad)
+    if bad:
+        raise SystemExit("%d label(s) do not match their source string" % bad)
+    print("  teasers            all %d are <= %d characters and drawn verbatim"
+          % (len(CELLS), TEASER_CHARS))
+    print("  reworded labels    none — all 30 fit 3 lines at 16 characters with no word broken."
+          " The ARUNACHAL defect is gone because the full string now sits in cell 17's teaser"
+          " (\"LAC IN ARUNACHAL\", 16 chars) instead of being clipped to \"ARNACHAL\".")
+
     print("\nCOLLISIONS  (the brief's [5])")
     print("  pairs checked     %d" % len(pairs_checked()))
     print("  collisions        %d" % count_collisions())
@@ -1392,7 +1659,7 @@ def report(img, out, size_bytes):
         raise SystemExit("smallest type %.1f px is under the %.0f px floor" % (smallest, MIN_TEXT))
 
     print("\nINK COVERAGE  (the brief's [3]: pixels differing from paper by more than 8 in any"
-          " channel)")
+          " channel — both numbers reported, no floor claimed)")
     whole = ink_frac(img, (0, 0, PAGE, PAGE))
     content = ink_frac(img, (X0, BAND_TOP_RULE[0], X1, BAND_FOOTBAR[0] + BAND_FOOTBAR[1]))
     grid_box = (X0, GRID_TOP, X1, GRID_TOP + GRID_H)
@@ -1401,49 +1668,52 @@ def report(img, out, size_bytes):
     print("  whole page        %6.2f %%  of 1024 x 1024" % (100 * whole))
     print("  content area      %6.2f %%  of x %d..%d, y %d..%d"
           % (100 * content, X0, X1, BAND_TOP_RULE[0], BAND_FOOTBAR[0] + BAND_FOOTBAR[1]))
-    print("  grid band         %6.2f %%  of x %d..%d, y %d..%d   (brief's floor 26 %%)"
+    print("  grid band         %6.2f %%  of x %d..%d, y %d..%d"
           % (100 * grid, grid_box[0], grid_box[2], grid_box[1], grid_box[3]))
     print("  lead panel        %6.2f %%  (the picture, not furniture)" % (100 * panel))
-    cell_px = COL_W * ROW_H
     band_px = (X1 - X0) * GRID_H
     per_cell = grid * band_px / len(CELLS)
-    print("  per-cell budget   %d ink px per cell of %d = %.1f %%"
-          % (per_cell, cell_px, 100.0 * per_cell / cell_px))
-    need = 0.26 * band_px
-    have = grid * band_px
-    print("  floor arithmetic  26 %% of the band = %d ink px; the page lays down %d."
-          % (need, have))
-    print("                    at 232 x 96 with Anton 15 labels and 9.5 px teasers each cell"
-          " carries ~%d px, so the band lands at %.2f %%." % (per_cell, 100 * grid))
-    print("                    closing the gap needs %.1fx the type's ink, which only a paper"
-          " tint or reverse-type blocks supply — both cost criterion 5." % (need / have))
-    print("  reference         the previous page measured %.2f %% of 960 x 256 = %d ink px"
-          " (reproduced by running the previous commit against this same measure); this band is"
-          " 960 x %d and carries %d px — the same ink in twice the area, which is why the"
-          " fraction halves." % (100 * PREV_GRID_FRAC, PREV_GRID_INK, GRID_H, have))
-    print("  grid band         %s" % ("PASS at the 26 %% floor" if grid >= 0.26 else
-                                      "MISS — measured, not faked"))
+    print("  per-cell average  %d ink px per cell of %d = %.1f %%"
+          % (per_cell, COL_W * ROW_H, 100.0 * per_cell / (COL_W * ROW_H)))
+    print("  reading           the grid band is %d px of 960 x %d; %d of those are ink. This is a"
+          " smaller cell than last pass (184 x 86 against 232 x 96), so the same ink per cell"
+          " reads denser."
+          % (int(round(grid * band_px)), GRID_H, int(round(grid * band_px))))
 
-    print("\nPICTOGRAMS  (the brief's [7]: ink pixels inside the %d x %d box, floor 40)"
-          % (ICON, ICON))
+    print("\nPICTOGRAMS  (the brief's [7]: ink pixels inside the %d x %d box, floor 60, and a"
+          " solid mass of 4 x 4)" % (ICON, ICON))
     counts = icon_ink_counts(img)
-    thin = []
+    masks = icon_masks()
+    thin, flat = [], []
     for idx, (key, n, ibox) in enumerate(counts):
-        flag = "ok" if n >= 40 else "THIN"
-        if n < 40:
+        mass = icon_solid_mass(masks[key])
+        ok = n >= 60 and mass == 16
+        if n < 60:
             thin.append(key)
-        print("  %2d  %-14s box x %3d..%3d  y %3d..%3d   ink %4d px  %s"
-              % (idx + 1, key, ibox[0], ibox[2], ibox[1], ibox[3], n, flag))
-    print("  glyphs            %d, ink range %d..%d px, mean %.1f"
+        if mass < 16:
+            flat.append(key)
+        print("  %2d  %-14s box x %3d..%3d  y %3d..%3d   ink %4d px  solid %2d/16  %s"
+              % (idx + 1, key, ibox[0], ibox[2], ibox[1], ibox[3], n, mass,
+                 "ok" if ok else ("THIN" if n < 60 else "NO 4x4")))
+    print("  glyphs            %d, ink range %d..%d px, mean %.1f, floor 60"
           % (len(counts), min(n for _, n, _ in counts), max(n for _, n, _ in counts),
              sum(n for _, n, _ in counts) / float(len(counts))))
-    wa, wb, iou = icon_distinctness()
-    print("  most alike pair   %s / %s  IoU %.3f  (0.00 = no shared pixel; identical = 1.000)"
-          % (wa, wb, iou))
-    if iou > 0.60:
+    wa, wb, iou, ham = icon_distinctness()
+    print("  most alike pair   %s / %s  IoU %.3f  coarse-bitmap Hamming %d/100"
+          % (wa, wb, iou, ham))
+    print("                    IoU 0.00 = no shared pixel, 1.000 = the same drawing. Two"
+          " different glyphs that both fill a 20 px box sit near 0.60 by construction, so the"
+          " duplicate gate is 0.70 and a copy would score 0/100 on the coarse bitmap.")
+    if iou > 0.70:
         raise SystemExit("glyphs %r and %r are the same drawing (IoU %.3f)" % (wa, wb, iou))
+    if ham < 8:
+        raise SystemExit("glyphs %r and %r share a coarse shape (%d/100 differ)" % (wa, wb, ham))
     if thin:
-        raise SystemExit("pictogram(s) under the 40 px floor: %s" % ", ".join(thin))
+        raise SystemExit("pictogram(s) under the 60 px floor: %s" % ", ".join(thin))
+    if flat:
+        raise SystemExit("pictogram(s) with no solid 4 x 4 mass: %s" % ", ".join(flat))
+    print("  distinct shapes   all %d differ; no glyph is lines only (each carries a filled mass)"
+          % len(counts))
 
     print("\nLEAD PANEL TONES  (the brief's [8])")
     uniq, solid = panel_tones(img)
@@ -1460,9 +1730,13 @@ def report(img, out, size_bytes):
 
     gaps = smallest_gap()
     allg = smallest_gap(with_type=False)
+    blocks = smallest_gap_between_blocks()
     print("\nSPACING")
-    print("  smallest type gap %.1f px  between %s and %s" % (gaps[2], gaps[0], gaps[1]))
-    print("  tightest any pair %.1f px  between %s and %s (rules meet at T-junctions)"
+    print("  two different blocks  %.1f px  between %s and %s" % (blocks[2], blocks[0], blocks[1]))
+    print("  leading in one label  %.1f px  between %s and %s (two lines of the same label,"
+          " by design — %d px advance minus 11 px of ink)"
+          % (gaps[2], gaps[0], gaps[1], LBL_DY))
+    print("  tightest any pair     %.1f px  between %s and %s"
           % (allg[2], allg[0], allg[1]))
 
     print("\nFILE  (the brief's [9])")
@@ -1484,8 +1758,6 @@ def main():
 
     report(img, out, size_bytes)
 
-    print("  stories           %d in the page data" % STORY_COUNT)
-
     # ---- determinism: render a second time and compare the bytes ------------------------
     second = os.path.join(tempfile.mkdtemp(prefix="makefun-"), "entry.png")
     build().save(second, "PNG", optimize=True)
@@ -1500,13 +1772,10 @@ def main():
     # ---- previews: what the judge actually sees ---------------------------------------
     here = os.path.dirname(os.path.abspath(out)) or "."
     print("\nPREVIEWS  (LANCZOS, beside the page)")
-    prev300 = None
     for px in (480, 300):
         prev = img.resize((px, px), Image.Resampling.LANCZOS)
         path = os.path.join(here, "preview_%d.png" % px)
         prev.save(path, "PNG", optimize=True)
-        if px == 300:
-            prev300 = prev
         print("  preview_%d.png   %6d bytes   %d x %d"
               % (px, os.path.getsize(path), px, px))
 
@@ -1514,16 +1783,17 @@ def main():
     print("\n300 px LEGIBILITY  (the brief's [10])")
     scale = 300.0 / PAGE
     print("  scale factor      %.4f  (300 / 1024)" % scale)
-    for size, what in ((38.0, "lead headline, Anton"), (19.0, "deck, serif"),
-                       (15.0, "cell label, Anton"), (9.5, "teaser / footer, mono"),
-                       (9.0, "region tag, mono")):
+    for size, what in ((34.0, "lead headline, Anton"), (18.0, "deck, serif"),
+                       (12.0, "cell label, Anton"), (10.0, "region tag (lead) / index, mono"),
+                       (8.0, "cell tag / teaser, mono")):
         print("  %5.1f px -> %4.2f px   %s" % (size, size * scale, what))
-    print("  smallest legible line height  %.2f px  (the 15 px label: %.2f px)"
-          % (15.0 * scale, 15.0 * scale))
-    print("  honest reading    at 300 px the Anton 15 labels are %.1f px tall — the smallest"
-          " line that still reads. The 9 px tags and 9.5 px teasers fall to %.1f px and become"
-          " texture, not reading matter; they carry the page's grey, the labels carry its words."
-          % (15.0 * scale, 9.0 * scale))
+    print("  smallest legible line height  %.2f px  (the 12 px label: %.2f px)"
+          % (12.0 * scale, 12.0 * scale))
+    print("  honest reading    at 300 px the Anton 12 labels carry %.1f px of ink on a %.2f px"
+          " line, and the 8 px tags and teasers fall to %.1f px of ink on a %.2f px line — below"
+          " the point where a mono glyph survives, so at 300 px they are texture and only the"
+          " labels and up still read as words."
+          % (11.0 * scale, 12.0 * scale, 6.0 * scale, 8.0 * scale))
 
     # ---- crops, so each can be looked at on its own ----------------------------------
     print("\nCROPS")
@@ -1535,9 +1805,9 @@ def main():
               % (name, os.path.getsize(path), crop.size[0], crop.size[1],
                  int(box[1]), int(box[3])))
 
-    # ---- icons.png: the twenty glyphs, 4x, in one strip ------------------------------
+    # ---- icons.png: the thirty glyphs, 4x, in one strip ------------------------------
     strip_pad, gut = 8, 8
-    big = ICON_UNITS * DRAW_SCALE                      # 96
+    big = ICON_UNITS * DRAW_SCALE                      # 80
     strip = Image.new("RGB", (strip_pad * 2 + len(CELLS) * big + (len(CELLS) - 1) * gut,
                               strip_pad * 2 + big), PAPER)
     for i, (tag, key, label, teaser) in enumerate(CELLS):
