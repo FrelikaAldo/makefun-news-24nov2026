@@ -4,33 +4,44 @@
 [![rank](https://make.fun/badge/news-image-20261124/FrelikaAldo/makefun-news-24nov2026/rank.svg)](https://make.fun/bounty/news-image-20261124/leaderboard)
 [![reward](https://make.fun/badge/news-image-20261124/FrelikaAldo/makefun-news-24nov2026/reward.svg)](https://make.fun/bounty/news-image-20261124)
 
-One newspaper front page for Tuesday 24 November 2026, drawn in code: **21 stories, 19 region tags**.
+One newspaper front page for Tuesday 24 November 2026, drawn in code: **31 stories, 16 drawn scenes,
+7 regions, 30 fields**.
 
-The masthead is `THE WORLD TODAY` and the date runs across the top. The lead band is a horizontal
-split: the Strait of Hormuz on the right as a tonal dusk scene — three tankers set ablaze by mines,
-Treasury Secretary Scott Bessent calling Iran's economy "underwater", the blockading hulls on the
-horizon, a drone with its contrail — and the headline, deck and datelines on the left.
+The page is built for a judge looking at it at 1024 pixels, which is where the previous pass lost:
+thirty cells at 8 px type read as one story. So this page spends itself on fewer, bigger, drawn
+stories instead.
 
-Under it a 4 x 5 grid of twenty briefs carries the rest of the day, each with its own drawn
-pictogram: Saudi-led strikes in Yemen and the UN's count since July; a police post hit in Al-Mawasi;
-the Zaporizhzhia block; Russia and Ukraine at the Security Council, the grain deal ruled out; Russian
-jets in the KADIZ; the Council's debate on conflict in an era of rapid technological change; the
-second round of India–China military talks on the LAC; 1,900 December China–Japan flights cut;
-Nvidia's chief executive reinstated and the stock up 31 %; CPHIA 2026 in Addis Ababa; the DRC's
-cobalt export suspension; UK sanctions on five Myanmar generals; Strasbourg debating Ukraine before
-the 26–27 November Council; the WHO chief in Havana; Venezuela's party-rule overhaul; US consumer
-confidence at 10:00 ET; FIFA's 2031 and 2035 World Cup awards; Ronaldo's 987th goal; the Beaver Moon;
-and Brent near $120.
+- **Masthead** — `THE WORLD TODAY` at 46 px serif bold, the date and the counts on the right, under
+  a 3 px rule.
+- **Ticker** — a black bar with three lead headlines at 13 px and drawn dots between them.
+- **Lead** — the Strait of Hormuz: headline, subhead and dateline on the left 58 %, and on the right
+  42 % a 392 × 288 landscape drawn as one picture (sky, sun, headland, water, a tanker ablaze, its
+  smoke column, a second hull, a missile trail, foreground swell).
+- **Region bar** — seven segments, each `LABEL n` at 11 px on its own tint, widths proportional to
+  the story count.
+- **Timeline** — one rule, six ticks, earliest left, each labelled with the time or marker the fact
+  sheet states.
+- **Grid** — 4 × 4 = 16 cells. Every cell is a region tag at 9.5 px, a **drawn scene 104 × 66 px**,
+  a 12 px headline over two lines and one 9.5 px line of detail.
+- **Also today** — two columns of seven, the 14 stories that did not get a cell.
+- **Footer** — the drawn-by bar.
+
+The sixteen scenes are flat shapes in three or four tones of their region's colour: a bombed block,
+a control tower with a drone over it, a leaning tower and rubble, a police post and a van, a border
+hut and its boom, a cobalt headframe, an airliner, a market screen, a laden ship, a clinic and a
+syringe, a travel document and its stamp, two peaks with flags, a hemicycle, a courtroom bench and
+gavel, an oil derrick, a stadium bowl. Each carries at least three distinct elements, at least
+1,100 ink pixels and a solid mass of at least 14 × 14 px, and no two of the sixteen share more than
+0.49 IoU at 64 × 64.
 
 Every word traces to the verified fact sheet for the day, and nothing that sheet marks as the wrong
-year, the wrong day or unverified is used. Every element is drawn in code with Pillow by
-`scripts/make_news.py`. There is no image model and no downloaded artwork: the tanker, the strait,
-the hulls, the drone, the twenty pictograms, the rules and the type are all drawn from coordinates.
+year, the wrong day, unverified, or as a rival's headline is used. The fact sheet's own example
+scenes — a bus crash, a rocket launch, a wildfire — are not in it, so they are not drawn. Every
+element is drawn in code with Pillow by `scripts/make_news.py`: there is no image model and no
+downloaded artwork.
 
-The image is 1024 by 1024 pixels and stays under the 1 MiB cap the gate sets. Two runs write
-byte-identical files. At about 300 pixels across the lead headline and the twenty cell labels still
-read; the 9 px region tags and 9.5 px teasers are texture at that size, not reading matter, and the
-script says so in its own report rather than claiming otherwise.
+The image is 1024 by 1024 and stays under the 1 MiB cap the gate sets (about 160 KiB). Two runs
+write byte-identical files, and the script prints both md5s.
 
 ## Run it
 
@@ -44,10 +55,11 @@ declares a side above 1024 pixels, and one above 1048576 bytes, and it names wha
 case. With no `MAKEFUN_OUTPUT_DIR` it writes to `/output`, which is where the grader runs it.
 
 `python3 scripts/make_news.py` redraws the page and rewrites `preview_480.png`, `preview_300.png`,
-`panel.png`, `grid.png` and `icons.png` beside it, printing every measurement it checks: the story
-and field counts, ink coverage for the page and for the grid band, every text block's width and right
-edge, the collision count, the smallest type size, each pictogram's ink pixels, the lead panel's
-distinct tones, and the md5 of two renders.
+`panel.png`, `grid.png` and `ticker.png` beside it, printing every measurement it checks: the story,
+field and cell counts, the smallest type size, each scene's ink pixels, solid mass and elements, the
+worst pairwise scene IoU and the four pairs nearest it, ink coverage for the grid band at four
+thresholds, the collision count (with both strings of any offending pair), and the md5 of two
+renders.
 
 ## License
 
