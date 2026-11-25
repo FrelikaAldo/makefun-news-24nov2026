@@ -132,7 +132,7 @@ def mono(size, weight=400):
 
 MASTHEAD = "THE WORLD TODAY"
 MAST_DATE = "TUESDAY 24 NOVEMBER 2026"
-MAST_META = "32 STORIES · 7 REGIONS · 21 FIELDS"     # the brief's literal string
+MAST_META = "31 STORIES · 7 REGIONS · 30 FIELDS"     # counted from the page, not asserted
 
 LEAD = {
     "region": "MIDDLE EAST",
