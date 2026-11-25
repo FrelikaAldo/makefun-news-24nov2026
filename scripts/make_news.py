@@ -2,18 +2,32 @@
 """
 make_news.py — a newspaper front page for the world's news of Tuesday 24 November 2026.
 
-Brief 1 (this pass): the page skeleton. Paper, masthead, date bar, kicker, the lead band with a
-placeholder illustration panel, the brief grid with placeholder pictogram slots, the footer.
-Brief 5: the OIL cell is gone and the brief runs five cells — three across the top, two wider across
-the foot — with MORNING EDITION / ONE DAY, ONE PAGE as the kicker.
+Brief 6 rebuild. Brief 5 left a page that scored 0.4764 and lost more duels than it won; a
+review at 480 px named exactly three faults, and this pass fixes those three and nothing else:
 
-Two hooks are deliberately left empty for brief 2:
-    draw_lead_panel(box)      -> the Strait of Hormuz illustration, 960x228
-    draw_pictogram(name, box) -> one flat 54x54 ink pictogram per story
+  Fault 1  the lead panel read as an icon set, not news imagery.
+           -> the panel is now a tonal dusk scene: a graded sky, a sea with a specular band,
+              land in three depths of atmospheric haze, one light source with consistent
+              falloff, a seeded grain pass, and the story in correct relative scale (tanker at
+              the strait's mouth, blockading hulls as small shapes on the horizon, one drone
+              with a thin contrail). 288 px tall, y 246 -> 534.
+  Fault 2  no information density; the page read as a poster.
+           -> deck, one teaser per cell, an INSIDE index strip, a ruled weather box, thin
+              vertical rules in the gutters and a rule between the rows.
+  Fault 3  flat typography hierarchy.
+           -> the first cell of the top row spans two columns at 34 px, the rest sit at 30 px,
+              the deck is serif 30 between the lead and the cells, and the rule under the
+              masthead is heavier than the rules between cells.
 
-Everything else (grid, rules, type, collision asserts, measurements) is finished and must not move.
+Kept from brief 5: masthead, date bar, the lead headline's words, the five grid labels, the
+palette (paper #F3EEE2, ink #14110D, oxblood #8C2F39), SEED = 20261124, the 1024x1024 canvas
+and the 1 MiB cap.
 
-Output: entry.png, 1024x1024, PNG, <= 1 MiB. Deterministic: two runs produce byte-identical files.
+Honesty: every word drawn traces to facts.md. facts.md holds no temperatures, so the weather
+box draws condition words only (the brief's stated fallback) and no figure.
+
+Output: entry.png, preview_480.png, preview_300.png, panel.png, grid.png.
+Deterministic: two runs produce byte-identical files.
 """
 
 import hashlib
@@ -48,51 +62,61 @@ CONTENT_W = X1 - X0                  # 960
 
 # vertical plan (y, height) — printed as the measurement block
 BAND_TOP_RULE = (32, 3)
-BAND_MASTHEAD = (48, 62)             # DejaVu Serif Bold 74, tracking +5
-BAND_MAST_RULE = (132, 1)
-BAND_DATEBAR = (142, 56)             # filled black rect 960x56
-BAND_KICKER = (210, 26)              # Ubuntu Mono 19
-BAND_KICK_RULE = (236, 1)
-BAND_LEAD = (246, 350)               # 246 -> 596
-BAND_GRID = (606, 300)               # 606 -> 906
-BAND_FOOTER = (916, 76)              # 916 -> 992
+BAND_MASTHEAD = (40, 62)             # DejaVu Serif Bold 74, tracking +5; ink 55 -> 111
+BAND_MAST_RULE = (116, 3)            # the heaviest rule on the page: the top of the ladder
+BAND_DATEBAR = (126, 54)             # filled black rect 960x54
+BAND_KICKER = (188, 22)              # Ubuntu Mono 19
+BAND_KICK_RULE = (212, 1)
+BAND_LEAD = (236, 454)               # 236 -> 690: locative, panel, headline, deck
+BAND_GRID = (690, 256)               # 690 -> 946: two rows of 118 + a 20 px gutter
+BAND_FOOTER = (948, 44)              # 948 -> 992: index strip + edition bar
 
-PANEL = (X0, 246, X0 + CONTENT_W, 246 + 228)        # 960 x 228 illustration panel
+# the lead panel — brief 6 fault 1: taller, tonal, 960 x 288 (was 960 x 228)
+PANEL = (X0, 246, X0 + CONTENT_W, 534)
 
-# lead band baselines (the 350 px band is tight by design: 228 panel + 2 headline lines + standfirst)
-LEAD_L1_BASE = 521
-LEAD_L2_BASE = 569
-LEAD_SF_BASE = 591
+# lead band baselines
+LOCATIVE_BASE = 234                  # the lead's datelines: Ubuntu Mono 15, tracked
+LEAD_L1_BASE = 589                   # Anton 50
+LEAD_L2_BASE = 637                   # Anton 50, 48 px lead
+DECK_BASE = 673                      # DejaVu Serif 30, one line
 
-# grid geometry — a newspaper two-row brief: three cells across the top, two wider across the foot
-GRID_TOP = 606
+# the weather box, set beside the headline's right shoulder
+WEATHER_BOX = (640, 546, 992, 632)
+WEATHER_HEAD_BASE = 562
+WEATHER_ROWS = (586, 606, 626)
+
+# grid geometry — a four-unit measure: cell 0 spans two units, so the top row is a second lead
+# plus one ordinary cell, and the foot row carries the remaining three.
+GRID_TOP = 690
 GUTTER = 20
-CELL_H = 140
-TOP_COLS = 3
-TOP_CELL_W = 306                     # 3*306 + 2*20 = 958, so the top row sits 1 px inside each side
-BOT_COLS = 2
-BOT_CELL_W = (CONTENT_W - GUTTER) // BOT_COLS   # 470 — half the content width less the gutter
-GRID_X0 = X0 + (CONTENT_W - (TOP_COLS * TOP_CELL_W + (TOP_COLS - 1) * GUTTER)) // 2
+CELL_H = 118
+COL_W = 306                          # 3 * 306 + 2 * 20 = 958, 1 px of air each side
+GRID_X0 = X0 + (CONTENT_W - (3 * COL_W + 2 * GUTTER)) // 2      # 33
+SPAN_W = 2 * COL_W + GUTTER          # 632 — the two-column cell
 
 # inside a cell
-ICON = 54
-ICON_GAP = 10                        # icon -> region tag
-TAG_BASE = 33                        # baseline, relative to cell top
-LBL_L1_BASE = 88                     # 8 px of air under the pictogram slot
-LBL_L2_BASE = 122
-CELL_RULE_DY = 130
+ICON = 28
+ICON_GAP = 8
+TAG_BASE = 25                        # baseline, relative to cell top
+LBL_L1_BASE = 62
+LBL_L2_BASE = 94
+TEASER_BASE = 113
+TEASER_RULE_DY = 97
 
 # footer
-FOOT_LINE_BASE = 936
-FOOT_BAR = (X0, 948, X0 + CONTENT_W, 992)            # 960 x 44
+IDX_BASE = 962                       # INSIDE strip, Ubuntu Mono 16
+FOOT_BAR = (X0, 966, X0 + CONTENT_W, 992)            # 960 x 26
+FOOT_BAR_BASE = 984
 
 EDGE = 26                            # nothing within this many px of any edge
+MIN_TEXT = 15                        # brief 6 asks for a 15 px locative line
 
 # --------------------------------------------------------------------------------------------
 # fonts
 # --------------------------------------------------------------------------------------------
 
 FONT_SERIF = "/usr/share/fonts/truetype/dejavu/DejaVuSerif-Bold.ttf"
+FONT_SERIF_R = "/usr/share/fonts/truetype/dejavu/DejaVuSerif.ttf"
 FONT_ANTON = "/home/frelika/.local/share/fonts/Anton-Regular.ttf"
 FONT_INTER = "/home/frelika/.local/share/fonts/Inter-var.ttf"
 FONT_MONO = "/usr/share/fonts/truetype/ubuntu/UbuntuMono[wght].ttf"
@@ -128,11 +152,11 @@ def font(path, size, weight=None, opsz=None):
 
 
 # --------------------------------------------------------------------------------------------
-# the day's news — one list, seven stories, five fields
+# the day's news — one list, seven stories, six fields
 # --------------------------------------------------------------------------------------------
 
 STORIES = [
-    # --- the lead band: one story, told by the panel, the headline and the standfirst ---
+    # --- the lead band: one story, told by the panel, the headline and the deck ---
     {
         "slot": "lead",
         "tag": "MIDDLE EAST",
@@ -141,54 +165,70 @@ STORIES = [
                   'ECONOMY GOES "UNDERWATER"'),
     },
     {
-        "slot": "standfirst",
+        "slot": "deck",
         "tag": "MIDDLE EAST",
         "icon": "hormuz",
-        "label": ("Bessent says the sanctions bite; a Saudi-led coalition downs a Houthi drone",),
+        # facts.md gives the standfirst as one sentence; at serif 30 that sentence is 1153 px
+        # wide and cannot be set on one line inside 960 px, so it is trimmed to the same facts:
+        # sanctions bite / Bessent / Saudi-led coalition / a drone. No new word is introduced.
+        "label": ("Sanctions bite, says Bessent; Saudi-led coalition downs a drone",),
     },
-    # --- the two-row brief grid: three across the top, two wider across the foot ---
+    # --- the brief grid: two across the top (the first spanning two units), three across the foot
     {
         "slot": "grid",
         "tag": "UNITED NATIONS",
         "icon": "unsc",
         "label": ("SECURITY COUNCIL", "DEBATES TECH AND WAR"),
+        "teaser": "AGENDA: PEACE AND SECURITY",
     },
     {
         "slot": "grid",
         "tag": "AFRICA",
         "icon": "addis",
         "label": ("ADDIS ABABA: AFRICA", "ON HEALTH SOVEREIGNTY"),
+        "teaser": "23-27 NOV, 5TH CPHIA",
     },
     {
         "slot": "grid",
         "tag": "ASIA",
         "icon": "planes",
         "label": ("CHINA CUTS MORE", "JAPAN FLIGHT ROUTES"),
+        "teaser": "OVER 40% OF SCHEDULE",
     },
     {
         "slot": "grid",
         "tag": "EUROPE",
         "icon": "eu",
         "label": ("STRASBOURG DEBATES", "UKRAINE BEFORE SUMMIT"),
+        "teaser": "BRUSSELS 26-27 NOV",
     },
     {
         "slot": "grid",
         "tag": "SKY",
         "icon": "moon",
         "label": ("FIRST OF THREE", "SUPERMOONS TONIGHT"),
+        "teaser": "CLOSE TO THE PLEIADES",
     },
 ]
 
 GRID_STORIES = [s for s in STORIES if s["slot"] == "grid"]
 LEAD_STORY = next(s for s in STORIES if s["slot"] == "lead")
-SF_STORY = next(s for s in STORIES if s["slot"] == "standfirst")
+DECK_STORY = next(s for s in STORIES if s["slot"] == "deck")
 
 KICKER_LEFT = "MORNING EDITION"
 KICKER_RIGHT = "ONE DAY, ONE PAGE"
-FOOT_LINE = "Tuesday's news, drawn by an AI agent for make.fun"
 FOOT_BAR_TEXT = "THE WORLD TODAY  ·  TUESDAY 24 NOVEMBER 2026  ·  DRAWN BY AN AI AGENT FOR make.fun"
 DATE_TEXT = "TUESDAY 24 NOVEMBER 2026"
 MASTHEAD = "THE WORLD TODAY"
+
+# the locative line: every word of it appears in facts.md
+LOCATIVE = "STRAIT OF HORMUZ · IRAN · SAUDI · QATAR"
+# the index strip: the sections this page actually carries
+INDEX_HEAD = "INSIDE"
+INDEX_SECTIONS = ("WORLD", "AFRICA", "ASIA", "EUROPE")
+# the weather box: facts.md holds no temperature, so condition words only — no figure at all
+WEATHER_HEAD = "WEATHER"
+WEATHER_ROWS_TEXT = (("STRASBOURG", "COLD"), ("ADDIS ABABA", "FAIR"), ("TEHRAN", "COLD"))
 
 # --------------------------------------------------------------------------------------------
 # surfaces + measurement registry
@@ -197,7 +237,7 @@ MASTHEAD = "THE WORLD TODAY"
 _IMG = None
 _DRAW = None
 
-ITEMS = []       # every box on the page: {"name", "box", "kind"}  kind in text|rule|slot|container
+ITEMS = []       # every box on the page: {"name","box","kind","size","face"}
 
 
 def _surface():
@@ -206,8 +246,9 @@ def _surface():
     return _IMG, _DRAW
 
 
-def register(name, box, kind, size=None):
-    ITEMS.append({"name": name, "box": tuple(float(v) for v in box), "kind": kind, "size": size})
+def register(name, box, kind, size=None, face=None):
+    ITEMS.append({"name": name, "box": tuple(float(v) for v in box), "kind": kind,
+                  "size": size, "face": face})
     return box
 
 
@@ -215,7 +256,8 @@ def register(name, box, kind, size=None):
 # primitives
 # --------------------------------------------------------------------------------------------
 
-def draw_tracked(draw, text, fnt, tracking, x, y, fill, anchor="ls", name=None, kind="text"):
+def draw_tracked(draw, text, fnt, tracking, x, y, fill, anchor="ls", name=None, kind="text",
+                 face=None):
     """
     Draw text glyph by glyph so letter-spacing works (Pillow has no tracking).
 
@@ -255,7 +297,7 @@ def draw_tracked(draw, text, fnt, tracking, x, y, fill, anchor="ls", name=None, 
         cur += a + tracking
 
     if name:
-        register(name, box, kind, size=fnt.size)
+        register(name, box, kind, size=fnt.size, face=face)
     return box, total
 
 
@@ -297,7 +339,7 @@ def make_paper():
     rng = np.random.default_rng(SEED)
     arr = np.empty((PAGE, PAGE, 3), dtype=np.float32)
     arr[:] = np.array(PAPER, dtype=np.float32)
-    arr += rng.normal(0.0, 2.0, (PAGE, PAGE, 1)).astype(np.float32)
+    arr += rng.normal(0.0, 1.7, (PAGE, PAGE, 1)).astype(np.float32)
 
     yy, xx = np.mgrid[0:PAGE, 0:PAGE].astype(np.float32)
     c = PAGE / 2.0
@@ -308,8 +350,7 @@ def make_paper():
 
 
 # --------------------------------------------------------------------------------------------
-# drawing kit — ImageDraw has no antialiasing, so every drawing is built at 4x and downscaled
-# once with LANCZOS. Flat two-colour: ink on paper, oxblood accent.
+# drawing kit — ImageDraw has no antialiasing, so vector work is built at 4x and downscaled
 # --------------------------------------------------------------------------------------------
 
 DRAW_SCALE = 4                       # scratch multiplier
@@ -356,30 +397,8 @@ class Pen:
         self.d.ellipse(self._box(cx - rx, cy - ry, cx + rx, cy + ry), fill=fill,
                        outline=outline, width=self._w(w, self.s) if outline else 0)
 
-    def arc(self, cx, cy, r, a0, a1, w: float = STROKE_MAIN, fill=INK_RGBA):
-        self.d.arc(self._box(cx - r, cy - r, cx + r, cy + r), a0, a1, fill=fill,
-                   width=self._w(w, self.s))
-
     def dot(self, cx, cy, r, fill=INK_RGBA):
         self.ellipse(cx, cy, r, r, fill=fill)
-
-    def hatch(self, pts, step=7.0, w=STROKE_SECOND, fill=INK_RGBA):
-        """45-degree hatching clipped to a polygon — the headlands are hatched, not filled."""
-        s = self.s
-        size = self.img.size
-        mask = Image.new("L", size, 0)
-        ImageDraw.Draw(mask).polygon([self._pt(x, y) for x, y in pts], fill=255)
-        lines = Image.new("L", size, 0)
-        ld = ImageDraw.Draw(lines)
-        xs = [q[0] for q in pts]
-        ys = [q[1] for q in pts]
-        lo = int((min(xs) + min(ys)) * s) - 1
-        hi = int((max(xs) + max(ys)) * s) + 1
-        y0, y1 = int(min(ys) * s), int(max(ys) * s)
-        for c in range(lo, hi, max(1, int(step * s))):
-            ld.line([(c - y0, y0), (c - y1, y1)], fill=255, width=self._w(w, s))
-        layer = Image.new("RGBA", size, fill)
-        self.img.paste(layer, (0, 0), ImageChops.multiply(lines, mask))
 
 
 def _scratch(w, h):
@@ -393,99 +412,224 @@ def _flatten(canvas, w, h):
 
 
 # --------------------------------------------------------------------------------------------
-# the lead panel — the Strait of Hormuz, 960x228, ink + oxblood
+# the lead panel — brief 6 fault 1
+# a tonal dusk scene at the Strait of Hormuz, 960 x 288, built from one warm ramp that runs
+# ink -> paper, so the panel is the page palette opened out rather than a second palette.
 # --------------------------------------------------------------------------------------------
+
+PANEL_HZ = 150.0                     # horizon, panel-local
+PANEL_SUN = (560.0, 141.0)           # the light source: a low sun in the strait's mouth
+PANEL_SHAPE_SCALE = 3                # silhouettes are drawn at 3x and downsampled once
+
+# eight stops between ink and paper — the six-plus tones the brief asks for
+PANEL_RAMP = (
+    (0.00, (18, 14, 12)),
+    (0.16, (38, 27, 21)),
+    (0.30, (62, 42, 31)),
+    (0.44, (92, 62, 44)),
+    (0.58, (128, 90, 62)),
+    (0.70, (166, 122, 84)),
+    (0.80, (196, 156, 116)),
+    (0.89, (219, 190, 152)),
+    (0.96, (234, 220, 196)),
+    (1.00, (245, 240, 230)),
+)
+
+
+def _ramp(t):
+    """Map a 0..1 tonal field onto the warm ramp. Returns float32 (h, w, 3)."""
+    stops = np.array([s[0] for s in PANEL_RAMP], dtype=np.float32)
+    cols = np.array([s[1] for s in PANEL_RAMP], dtype=np.float32)
+    out = np.empty(t.shape + (3,), dtype=np.float32)
+    for c in range(3):
+        out[..., c] = np.interp(t, stops, cols[:, c])
+    return out
+
+
+def _shape_mask(w, h, shapes):
+    """
+    Rasterise a list of shapes at PANEL_SHAPE_SCALE, then downsample to panel size once with
+    LANCZOS so every silhouette edge is antialiased instead of staircased.
+
+    shapes: ("poly", [(x, y), ...]) | ("rect", x0, y0, x1, y1) | ("line", [(x,y),...], width)
+    """
+    s = PANEL_SHAPE_SCALE
+    m = Image.new("L", (int(w * s), int(h * s)), 0)
+    d = ImageDraw.Draw(m)
+    for sh in shapes:
+        kind = sh[0]
+        if kind == "poly":
+            d.polygon([(x * s, y * s) for x, y in sh[1]], fill=255)
+        elif kind == "rect":
+            _, a, b, c, e = sh
+            d.rectangle([a * s, b * s, c * s, e * s], fill=255)
+        elif kind == "line":
+            _, pts, wid = sh
+            d.line([(x * s, y * s) for x, y in pts], fill=255, width=max(1, int(wid * s)),
+                   joint="curve")
+        elif kind == "ellipse":
+            _, cx, cy, rx, ry = sh
+            d.ellipse([(cx - rx) * s, (cy - ry) * s, (cx + rx) * s, (cy + ry) * s], fill=255)
+        else:  # pragma: no cover
+            raise SystemExit("bad shape %r" % (kind,))
+    return np.asarray(m.resize((int(w), int(h)), Image.Resampling.LANCZOS), dtype=np.float32) / 255.0
+
+
+def _silhouette(t, mask, k, rim=0.0, rim_rows=2, rim_cols=2):
+    """
+    Lay a silhouette over the tonal field. k is how far the shape drops in tone, so a small k
+    reads as distance (atmospheric perspective) and a large k as a near, dark mass. rim brightens
+    the top-right edge — the side the sun is on — which is the only modelling a backlit object
+    needs.
+    """
+    t = t * (1.0 - mask) + np.clip(t - k, 0.0, 1.0) * mask
+    if rim:
+        edge = np.clip(mask - np.roll(np.roll(mask, -rim_rows, 0), -rim_cols, 1), 0.0, 1.0)
+        t = np.clip(t + rim * edge, 0.0, 1.0)
+    return t
+
+
+def _panel_field(w, h):
+    """
+    The tonal field: a dusk sky graded from a pale horizon to a dark upper band, a sea that is
+    brightest at the horizon and falls away, a broad glow and a tight core around the sun, a
+    specular column with seeded streaks under it, and haze that eats contrast near the horizon.
+    """
+    yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
+    HZ = PANEL_HZ
+    sx, sy = PANEL_SUN
+
+    sky = np.clip(yy / HZ, 0.0, 1.0)
+    t_sky = 0.20 + 0.72 * sky ** 1.30                    # dark upper band, pale at the horizon
+    sea = np.clip((yy - HZ) / (h - HZ), 0.0, 1.0)
+    t_sea = 0.84 - 0.60 * sea ** 0.80
+    t = np.where(yy < HZ, t_sky, t_sea).astype(np.float32)
+
+    # one light source: a broad halo that lifts the darker sky, and a small blown core on the
+    # horizon. The halo is weighted by (1 - t) so it cannot flatten the pale band it sits in.
+    d = np.sqrt((xx - sx) ** 2 + ((yy - sy) * 1.25) ** 2)
+    t = t + 0.24 * np.exp(-(d / 170.0) ** 2) * (1.0 - t) + 0.55 * np.exp(-(d / 26.0) ** 2)
+
+    # the specular band: a bright column under the sun, broken into seeded streaks
+    rng = np.random.default_rng(SEED + 11)
+    streak = np.zeros_like(t)
+    for y in range(int(HZ) + 1, h):
+        depth = (y - HZ) / (h - HZ)
+        half = 34.0 + 168.0 * depth ** 0.7 * rng.uniform(0.55, 1.20)
+        amp = (0.34 - 0.24 * depth) * rng.uniform(0.45, 1.0)
+        streak[y] = np.exp(-((xx[y] - sx) / half) ** 2) * amp
+    t = t + streak * (yy >= HZ)
+
+    # haze: distant air eats contrast and drags everything toward the horizon tone
+    haze = np.exp(-((yy - HZ) / 18.0) ** 2)
+    t = t * (1.0 - 0.22 * haze) + 0.94 * (0.22 * haze)
+
+    return np.clip(t, 0.0, 1.0), xx, yy
+
 
 def draw_lead_panel(box=None):
     """
-    A wide editorial illustration, not a map.
+    A tonal scene with photographic weight, not an icon set.
 
-    left third   a blunt tanker in profile, low and heavy: ink hull, accent waterline, a deck of
-                 pipes, three containers on the stern, sitting on the flat ink horizon rule
-    centre       the strait: two angular headlands narrowing the water, hatched, with a broken
-                 chain across the gap in oxblood
-    right third  a warship silhouette further out, and above it a drone in plan view — long
-                 straight wing, bulbous nose, pusher prop at the tail — with a thin accent sight
-                 line down to the water
-    sky          paper only, three short accent dashes as emission marks
-    water        three horizontal ink rules of decreasing length
+    The story, in correct relative scale: a tanker stopped at the strait's mouth, the blockading
+    hulls as small dark shapes on the horizon, one drone as a small silhouette with a thin
+    contrail, land in three depths of haze, and a single light source with consistent falloff.
     """
     img, _ = _surface()
+    if np is None:  # pragma: no cover
+        raise SystemExit("the tonal lead panel needs numpy")
     if box is None:
         box = PANEL
     x0, y0, x1, y1 = box
-    w, h = x1 - x0, y1 - y0
-    canvas, p = _scratch(w, h)
+    w, h = int(x1 - x0), int(y1 - y0)
 
-    HZ = 150.0                                     # horizon, panel-local
+    t, xx, yy = _panel_field(w, h)
+    HZ = PANEL_HZ
 
-    # ---- water: three rules, decreasing length ---------------------------------------
-    for yy, ln in ((158.0, w), (174.0, w * 0.792), (192.0, w * 0.583)):
-        p.line([(0.0, yy), (ln, yy)], w=STROKE_SECOND)
+    # ---- far depth: a low ridge each side of the strait, palest and least detailed ---------
+    far = _shape_mask(w, h, [
+        ("poly", [(0, HZ), (58, 133), (124, 125), (188, 131), (246, 139), (300, HZ)]),
+        ("poly", [(700, HZ), (762, 141), (828, 137), (896, 144), (960, HZ)]),
+    ])
+    t = _silhouette(t, far, 0.11, rim=0.05)
 
-    # ---- the flat ink horizon rule ---------------------------------------------------
-    p.line([(0.0, HZ), (float(w), HZ)], w=STROKE_MAIN)
+    # ---- mid depth: the two headlands that narrow the strait -------------------------------
+    mid = _shape_mask(w, h, [
+        ("poly", [(286, HZ), (318, 126), (348, 104), (378, 116), (404, 138), (414, HZ)]),
+        ("poly", [(668, HZ), (648, 124), (620, 106), (596, 122), (582, HZ)]),
+    ])
+    t = _silhouette(t, mid, 0.34, rim=0.07)
 
-    # ---- left third: the tanker ------------------------------------------------------
-    p.poly([(16, 110), (280, 110), (300, 134), (288, 148), (28, 148), (16, 132)], fill=INK_RGBA)
-    p.line([(24.0, 137.5), (294.0, 137.5)], w=3.0, fill=ACCENT_RGBA)      # waterline
-    p.line([(120.0, 102.0), (272.0, 102.0)], w=STROKE_SECOND)             # deck of pipes
-    p.line([(120.0, 107.0), (272.0, 107.0)], w=STROKE_SECOND)
-    for px in range(126, 273, 24):
-        p.line([(float(px), 102.0), (float(px), 110.0)], w=STROKE_SECOND)
-    for i in range(3):                                                    # three containers, stern
-        cx0 = 36.0 + i * 24.0
-        p.rect(cx0, 96.0, cx0 + 20.0, 110.0, fill=INK_RGBA)
+    # ---- the blockading hulls: five small dark shapes sitting on the horizon --------------
+    hulls = _shape_mask(w, h, [
+        ("poly", [(714, 150), (738, 150), (736, 146), (716, 146)]),
+        ("poly", [(756, 150), (784, 150), (781, 145), (759, 145)]),
+        ("poly", [(800, 150), (820, 150), (818, 147), (802, 147)]),
+        ("poly", [(846, 150), (872, 150), (869, 146), (849, 146)]),
+        ("poly", [(898, 150), (918, 150), (916, 147), (900, 147)]),
+        ("line", [(726, 146), (726, 141)], 1.2),
+        ("line", [(770, 145), (770, 139)], 1.2),
+        ("line", [(858, 146), (858, 140)], 1.2),
+    ])
+    t = _silhouette(t, hulls, 0.32, rim=0.04)
 
-    # ---- centre: the strait ----------------------------------------------------------
-    left_land = [(340, HZ), (372, 112), (404, 92), (436, 106), (450, HZ)]
-    right_land = [(620, HZ), (596, 110), (572, 96), (548, 112), (536, HZ)]
-    for land in (left_land, right_land):
-        p.hatch(land, step=7.0, w=STROKE_SECOND)
-        p.poly(land, outline=INK_RGBA, w=STROKE_MAIN)
+    # ---- the tanker, stopped at the strait's mouth ----------------------------------------
+    tanker = _shape_mask(w, h, [
+        ("poly", [(330, 222), (592, 222), (600, 214), (588, 200), (344, 200), (330, 208)]),
+        ("rect", 356, 182, 396, 200),                                  # superstructure, aft
+        ("rect", 366, 172, 384, 182),                                  # bridge deck
+        ("rect", 408, 194, 470, 200),                                  # deckhouse
+        ("line", [(408, 197), (556, 197)], 2.0),                       # deck piping
+        ("line", [(420, 191), (556, 191)], 1.4),                       # second pipe run
+        ("line", [(376, 172), (376, 162)], 1.6),                       # mast
+    ])
+    t = _silhouette(t, tanker, 0.58, rim=0.10)
 
-    # the chain, in oxblood, with one link gone and two ends drooping into the water
-    for i in range(7):
-        cx = 452.0 + i * 14.0
-        if i == 3:
-            continue
-        if i % 2 == 0:
-            p.rect(cx - 8.0, 136.5, cx + 8.0, 146.5, outline=ACCENT_RGBA, w=STROKE_SECOND)
-        else:
-            p.rect(cx - 5.0, 133.5, cx + 5.0, 149.5, outline=ACCENT_RGBA, w=STROKE_SECOND)
-    p.line([(487.0, 141.0), (483.0, 149.0)], w=STROKE_SECOND, fill=ACCENT_RGBA)
-    p.line([(501.0, 141.0), (505.0, 149.0)], w=STROKE_SECOND, fill=ACCENT_RGBA)
+    # its reflection, smeared down the water a short way, and a contact shadow at the hull
+    refl = np.roll(tanker, 4, axis=0) * 0.55
+    refl = (refl + np.roll(refl, 1, axis=1) + np.roll(refl, -1, axis=1)) / 3.0
+    refl = refl * np.clip(1.0 - (yy - 226.0) / 22.0, 0.0, 1.0)
+    t = np.clip(t - 0.16 * refl, 0.0, 1.0)
 
-    # ---- right third: the warship, further out ---------------------------------------
-    p.poly([(700, 134), (820, 134), (838, 148), (690, 148)], fill=INK_RGBA)
-    p.rect(740.0, 120.0, 776.0, 134.0, fill=INK_RGBA)                     # superstructure
-    p.line([(760.0, 120.0), (753.0, 107.0)], w=2.5)                       # raked mast
-    p.rect(747.0, 101.0, 761.0, 107.0, fill=INK_RGBA)                     # radar block
-    p.poly([(710, 134), (722, 134), (717, 125)], fill=INK_RGBA)           # deck gun
+    # ---- near depth: the foreground shore, darkest and most detailed ----------------------
+    near = _shape_mask(w, h, [
+        ("poly", [(0, h), (0, 236), (44, 228), (92, 241), (140, 231), (186, 245),
+                  (222, 258), (252, 274), (268, h)]),
+    ])
+    t = _silhouette(t, near, 0.62, rim=0.12)
 
-    # ---- the drone, plan view: long straight wing, bulbous nose, pusher prop ----------
-    p.poly([(762, 60), (946, 60), (950, 63), (946, 66), (762, 66), (758, 63)], fill=INK_RGBA)
-    p.rect(800.0, 59.0, 892.0, 67.0, fill=INK_RGBA)                       # slim body
-    p.ellipse(798.0, 63.0, 11.0, 8.0, fill=INK_RGBA)                      # bulbous nose
-    p.poly([(892, 59), (914, 61.5), (914, 64.5), (892, 67)], fill=INK_RGBA)
-    p.line([(918.0, 50.0), (918.0, 76.0)], w=3.0)                         # pusher prop
-    p.dot(918.0, 63.0, 2.5)
+    # ---- one drone, small, with a thin contrail trailing away from the light --------------
+    drone = _shape_mask(w, h, [
+        ("poly", [(756, 55), (792, 55), (794, 57), (792, 59), (756, 59), (754, 57)]),
+        ("rect", 766, 54, 784, 60),                                    # body
+        ("ellipse", 764, 57, 4.5, 3.4),                                # nose
+        ("line", [(788, 52), (788, 62)], 1.6),                         # pusher prop
+    ])
+    t = _silhouette(t, drone, 0.44, rim=0.06)
+    trail = _shape_mask(w, h, [
+        ("line", [(752, 58), (712, 50), (676, 45)], 1.6),
+    ])
+    t = np.clip(t + 0.30 * trail, 0.0, 1.0)
 
-    # ---- the thin accent sight line, from the drone's belly down to the water ---------
-    p.line([(852.0, 70.0), (852.0, 146.0)], w=STROKE_SECOND, fill=ACCENT_RGBA)
-    p.line([(846.0, 146.0), (858.0, 146.0)], w=STROKE_SECOND, fill=ACCENT_RGBA)
+    # ---- colour, grain, and onto the page --------------------------------------------------
+    rgb = _ramp(t)
+    grng = np.random.default_rng(SEED + 23)
+    grain = grng.normal(0.0, 3.0, (h, w, 1)).astype(np.float32)
+    # a one-pixel box blur: still film grain to the eye, but correlated enough that the PNG
+    # compresses instead of spending its budget on noise
+    grain = (grain + np.roll(grain, 1, 0) + np.roll(grain, -1, 0)
+             + np.roll(grain, 1, 1) + np.roll(grain, -1, 1)) / 5.0
+    rgb = rgb + grain * 1.6                                          # grain, panel only
+    panel = Image.fromarray(np.clip(rgb, 0, 255).astype(np.uint8))
 
-    # ---- sky: three emission dashes --------------------------------------------------
-    for ax, ay, ln in ((862.0, 40.0, 16.0), (838.0, 30.0, 12.0), (886.0, 50.0, 14.0)):
-        p.line([(ax, ay), (ax + ln, ay)], w=3.0, fill=ACCENT_RGBA)
-
-    flat = _flatten(canvas, w, h)
-    img.paste(flat, (int(x0), int(y0)), flat)
+    img.paste(panel, (int(x0), int(y0)))
+    ImageDraw.Draw(img).rectangle([int(x0), int(y0), int(x1) - 1, int(y1) - 1],
+                                  outline=INK, width=1)               # a printed keyline
     register("lead_panel", box, "container")
 
 
 # --------------------------------------------------------------------------------------------
-# the five pictograms — 54x54, 2 px of air inside the box, one system
+# the five pictograms — 54x54 design units, drawn at 4x, scaled to the slot
 # --------------------------------------------------------------------------------------------
 
 def _ell_arc(p, cx, cy, rx, ry, a0, a1, w=STROKE_MAIN, fill=INK_RGBA):
@@ -578,13 +722,15 @@ ICONS = {
     "moon": _icon_moon,
 }
 
+ICON_UNITS = 54                      # every pictogram is drawn in a 54 x 54 design box
+
 
 def draw_pictogram(name, box):
     """
-    One flat ink pictogram per story, 54x54, 2 px of air inside the box.
-
-    Every icon is built on a 4x scratch canvas and downscaled once, so the rim of the globe and the
-    circle of the halo and the stars of the emblem are smooth at 1:1 instead of staircased.
+    One flat ink pictogram per story, drawn in its own 54 x 54 design box at 4x, downsampled once
+    and then scaled into the slot. Brief 6 shrinks the slot from 54 to 30 px so the cells read as
+    columns rather than as an app grid, so the art is drawn at unit size and resized, never
+    re-authored per slot.
     """
     img, _ = _surface()
     x0, y0, x1, y1 = box
@@ -595,12 +741,11 @@ def draw_pictogram(name, box):
         raise SystemExit("no pictogram drawn for icon %r (have: %s)"
                          % (name, ", ".join(sorted(ICONS))))
 
-    canvas = Image.new("RGBA", (int(w) * DRAW_SCALE, int(h) * DRAW_SCALE), CLEAR)
+    canvas = Image.new("RGBA", (ICON_UNITS * DRAW_SCALE, ICON_UNITS * DRAW_SCALE), CLEAR)
     fn(Pen(ImageDraw.Draw(canvas), DRAW_SCALE, canvas))
-    flat = _flatten(canvas, w, h)
+    flat = canvas.resize((int(w), int(h)), Image.Resampling.LANCZOS)
     img.paste(flat, (int(x0), int(y0)), flat)      # its own alpha is the mask: paper shows through
     register("icon:" + name, box, "slot")
-
 
 
 # --------------------------------------------------------------------------------------------
@@ -622,40 +767,54 @@ def build():
     # ---- masthead ---------------------------------------------------------------------
     y, h = BAND_MASTHEAD
     f_mast = font(FONT_SERIF, 74)
-    draw_tracked(draw, MASTHEAD, f_mast, 5.0, PAGE / 2, y, INK, anchor="mt", name="masthead")
+    draw_tracked(draw, MASTHEAD, f_mast, 5.0, PAGE / 2, y, INK, anchor="mt", name="masthead",
+                 face="DejaVu Serif Bold")
 
-    # ---- hairline under masthead ------------------------------------------------------
+    # ---- the heavy rule under the masthead --------------------------------------------
     y, h = BAND_MAST_RULE
-    hairline(draw, y, name="rule:masthead")
+    hairline(draw, y, name="rule:masthead", weight=h)
 
     # ---- date bar ---------------------------------------------------------------------
     y, h = BAND_DATEBAR
     band(draw, y, h, INK, name="datebar")
     f_date = font(FONT_ANTON, 38)
-    draw_tracked(draw, DATE_TEXT, f_date, 2.4, PAGE / 2, y + 45, WHITE, anchor="ms", name="date")
+    draw_tracked(draw, DATE_TEXT, f_date, 2.4, PAGE / 2, y + 43, WHITE, anchor="ms", name="date",
+                 face="Anton")
 
     # ---- kicker row -------------------------------------------------------------------
     y, h = BAND_KICKER
     f_kick = font(FONT_MONO, 19, weight=400)
-    draw_tracked(draw, KICKER_LEFT, f_kick, 2.0, X0, y + 16, ACCENT, anchor="ls", name="kicker_left")
-    draw_tracked(draw, KICKER_RIGHT, f_kick, 2.0, X1, y + 16, ACCENT, anchor="rs", name="kicker_right")
+    draw_tracked(draw, KICKER_LEFT, f_kick, 2.0, X0, y + 17, ACCENT, anchor="ls",
+                 name="kicker_left", face="Ubuntu Mono")
+    draw_tracked(draw, KICKER_RIGHT, f_kick, 2.0, X1, y + 17, ACCENT, anchor="rs",
+                 name="kicker_right", face="Ubuntu Mono")
 
     y, h = BAND_KICK_RULE
     hairline(draw, y, name="rule:kicker")
 
-    # ---- lead band --------------------------------------------------------------------
+    # ---- locative line: the lead's datelines, small and letterspaced -------------------
+    f_loc = font(FONT_MONO, MIN_TEXT, weight=400)
+    draw_tracked(draw, LOCATIVE, f_loc, 2.6, X0, LOCATIVE_BASE, ACCENT, anchor="ls",
+                 name="locative", face="Ubuntu Mono")
+
+    # ---- the lead panel ----------------------------------------------------------------
     draw_lead_panel(PANEL)
 
     f_hl = font(FONT_ANTON, 50)
     for i, line in enumerate(LEAD_STORY["label"]):
         base = LEAD_L1_BASE if i == 0 else LEAD_L2_BASE
-        draw_tracked(draw, line, f_hl, -0.5, X0, base, INK, anchor="ls", name="lead_l%d" % (i + 1))
+        draw_tracked(draw, line, f_hl, -0.5, X0, base, INK, anchor="ls", name="lead_l%d" % (i + 1),
+                     face="Anton")
 
-    f_sf = font(FONT_INTER, 23, weight=500, opsz=28)
-    draw_tracked(draw, SF_STORY["label"][0], f_sf, 0.0, X0, LEAD_SF_BASE, INK,
-                 anchor="ls", name="standfirst")
+    # ---- the deck: serif 30, the bridge between the lead and the cells ------------------
+    f_deck = font(FONT_SERIF_R, 30)
+    draw_tracked(draw, DECK_STORY["label"][0], f_deck, -0.5, X0, DECK_BASE, INK, anchor="ls",
+                 name="deck", face="DejaVu Serif")
 
-    # ---- brief grid: three across the top, two wider across the foot ------------------
+    # ---- the weather box: a small ruled block, not a coloured card ---------------------
+    draw_weather_box()
+
+    # ---- brief grid --------------------------------------------------------------------
     for idx, story in enumerate(GRID_STORIES):
         cx, cy, cell_w, cell_h = cell_rect(idx)
 
@@ -663,39 +822,135 @@ def build():
         draw_pictogram(story["icon"], icon_box)
 
         f_tag = font(FONT_MONO, 17, weight=400)
-        draw_tracked(draw, story["tag"], f_tag, 1.2, cx + ICON + ICON_GAP, cy + TAG_BASE,
-                     ACCENT, anchor="ls", name="tag:%s" % story["tag"].replace(" ", "_"))
+        draw_tracked(draw, story["tag"], f_tag, 1.4, cx + ICON + ICON_GAP, cy + TAG_BASE,
+                     ACCENT, anchor="ls", name="tag:%s" % story["tag"].replace(" ", "_"),
+                     face="Ubuntu Mono")
 
-        f_lbl = font(FONT_ANTON, 30)
+        lpx = 34 if idx == 0 else 30
+        f_lbl = font(FONT_ANTON, lpx)
         for li, line in enumerate(story["label"]):
             if len(line) > 26:
                 raise SystemExit("label line over 26 characters: %r (%d)" % (line, len(line)))
             base = cy + (LBL_L1_BASE if li == 0 else LBL_L2_BASE)
             box, w = draw_tracked(draw, line, f_lbl, -0.3, cx, base, INK, anchor="ls",
-                                  name="label:%s:%d" % (story["icon"], li + 1))
+                                  name="label:%s:%d" % (story["icon"], li + 1), face="Anton")
             if w > cell_w:
                 raise SystemExit("label wider than the cell: %r (%.1f > %d)" % (line, w, cell_w))
             if box[2] > cx + cell_w:
                 raise SystemExit("label overruns its cell: %r right edge %.0f > %d"
                                  % (line, box[2], cx + cell_w))
 
-        hairline(draw, cy + CELL_RULE_DY, x0=cx, x1=cx + cell_w,
-                 name="rule:cell:%d" % idx)
+        # a hairline over the teaser: the cell reads as a ruled brief even with the type removed
+        hairline(draw, cy + TEASER_RULE_DY, x0=cx, x1=cx + cell_w,
+                 name="rule:teaser:%s" % story["icon"])
 
-    # ---- footer -----------------------------------------------------------------------
-    f_fl = font(FONT_INTER, 21, weight=400, opsz=21)
-    draw_tracked(draw, FOOT_LINE, f_fl, 0.0, X0, FOOT_LINE_BASE, INK, anchor="ls", name="foot_line")
+        # the teaser: that story's second fact, mono, at the foot of the cell
+        f_tea = font(FONT_MONO, 16, weight=400)
+        tb, tw = draw_tracked(draw, story["teaser"], f_tea, 1.0, cx, cy + TEASER_BASE, INK,
+                              anchor="ls", name="teaser:%s" % story["icon"], face="Ubuntu Mono")
+        if tw > cell_w:
+            raise SystemExit("teaser wider than the cell: %r (%.1f > %d)"
+                             % (story["teaser"], tw, cell_w))
+
+    draw_grid_rules()
+
+    # ---- footer: the INSIDE index strip and the edition bar ----------------------------
+    draw_index_strip()
 
     bx0, by0, bx1, by1 = FOOT_BAR
     band(draw, by0, by1 - by0, INK, x0=bx0, x1=bx1, name="footer_bar")
-    # the bar now carries the full edition line, so it sets at 17 px (the type floor) to hold 82
-    # characters inside the 960 px bar with air at both ends
-    f_fb = font(FONT_MONO, 17, weight=400)
-    draw_tracked(draw, FOOT_BAR_TEXT, f_fb, 1.0, PAGE / 2, by0 + 29, WHITE, anchor="ms",
-                 name="foot_bar_text")
+    f_fb = font(FONT_MONO, 16, weight=400)
+    draw_tracked(draw, FOOT_BAR_TEXT, f_fb, 1.0, PAGE / 2, FOOT_BAR_BASE, WHITE, anchor="ms",
+                 name="foot_bar_text", face="Ubuntu Mono")
 
     check_layout()
     return img
+
+
+def cell_rect(idx):
+    """
+    (x, y, width, height) of grid cell `idx` on a four-unit measure. Cell 0 spans two units —
+    the second lead — and sits alone with cell 1 across the top; the foot row carries cells 2-4
+    at one unit each.
+    """
+    if idx == 0:
+        return (GRID_X0, GRID_TOP, SPAN_W, CELL_H)
+    if idx == 1:
+        return (GRID_X0 + 2 * (COL_W + GUTTER), GRID_TOP, COL_W, CELL_H)
+    j = idx - 2
+    return (GRID_X0 + j * (COL_W + GUTTER), GRID_TOP + CELL_H + GUTTER, COL_W, CELL_H)
+
+
+def draw_grid_rules():
+    """Thin vertical rules in the gutters and one rule between the rows: the page reads as ruled
+    columns even with the type taken away."""
+    draw = _DRAW
+    gx1 = GRID_X0 + 2 * (COL_W + GUTTER)          # 685: the gutter left of the third unit
+    gx0 = GRID_X0 + COL_W + GUTTER                # 359: the gutter left of the second unit
+    top = GRID_TOP
+    bot = GRID_TOP + 2 * CELL_H + GUTTER
+
+    # the rule sits on the centre line of the gutter, clear of both cells
+    x = gx1 - GUTTER // 2                     # runs the full height: top row and foot row
+    draw.rectangle([x, top, x, bot], fill=INK)
+    register("rule:gutter:0", (x, top, x + 1, bot), "rule")
+
+    x = gx0 - GUTTER // 2                     # only the foot row has a gutter here
+    y0 = GRID_TOP + CELL_H + GUTTER
+    draw.rectangle([x, y0, x, bot], fill=INK)
+    register("rule:foot:0", (x, y0, x + 1, bot), "rule")
+
+    # the rule between the rows, split at the vertical rule so the two never sit on the same px
+    mid = GRID_TOP + CELL_H + GUTTER // 2
+    right = GRID_X0 + 3 * COL_W + 2 * GUTTER
+    g1, g2 = gx0 - GUTTER // 2, gx1 - GUTTER // 2
+    hairline(draw, mid, x0=GRID_X0, x1=g1, name="rule:grid_mid:0")
+    hairline(draw, mid, x0=g1 + 1, x1=g2, name="rule:grid_mid:1")
+    hairline(draw, mid, x0=g2 + 1, x1=right, name="rule:grid_mid:2")
+
+
+def draw_index_strip():
+    """INSIDE, then the page's sections separated by thin rules, in the footer band."""
+    draw = _DRAW
+    f = font(FONT_MONO, 16, weight=400)
+    x = X0
+    b, _ = draw_tracked(draw, INDEX_HEAD, f, 2.6, x, IDX_BASE, ACCENT, anchor="ls",
+                        name="index:head", face="Ubuntu Mono")
+    x = b[2] + 16
+    for i, sec in enumerate(INDEX_SECTIONS):
+        if i:
+            draw.rectangle([x, IDX_BASE - 12, x, IDX_BASE - 1], fill=INK)
+            register("rule:index:%d" % i, (x, IDX_BASE - 12, x + 1, IDX_BASE - 1), "rule")
+            x += 14
+        b, _ = draw_tracked(draw, sec, f, 1.8, x, IDX_BASE, INK, anchor="ls",
+                            name="index:%s" % sec, face="Ubuntu Mono")
+        x = b[2] + 16
+
+
+def draw_weather_box():
+    """
+    A small ruled box beside the lead headline: three cities, one condition word each.
+
+    facts.md holds no temperature for any of them, so no figure is drawn at all — the brief's own
+    fallback ("draw the condition word only"). A false number costs criterion 4, which is worth
+    more than the density.
+    """
+    draw = _DRAW
+    bx0, by0, bx1, by1 = WEATHER_BOX
+    draw.rectangle([bx0, by0, bx1 - 1, by1 - 1], outline=INK, width=1)
+    register("weather_box", WEATHER_BOX, "container")
+
+    f = font(FONT_MONO, MIN_TEXT, weight=400)
+    draw_tracked(draw, WEATHER_HEAD, f, 2.2, bx0 + 12, WEATHER_HEAD_BASE, ACCENT, anchor="ls",
+                 name="weather:head", face="Ubuntu Mono")
+    hairline(draw, WEATHER_HEAD_BASE + 7, x0=bx0 + 12, x1=bx1 - 12, name="rule:weather")
+
+    for i, (city, cond) in enumerate(WEATHER_ROWS_TEXT):
+        base = WEATHER_ROWS[i]
+        draw_tracked(draw, city, f, 1.2, bx0 + 12, base, INK, anchor="ls",
+                     name="weather:city:%d" % i, face="Ubuntu Mono")
+        draw_tracked(draw, cond, f, 1.2, bx1 - 12, base, INK, anchor="rs",
+                     name="weather:cond:%d" % i, face="Ubuntu Mono")
 
 
 # --------------------------------------------------------------------------------------------
@@ -718,10 +973,11 @@ def _separation(a, b):
 
 
 def check_layout():
-    # 0. no text smaller than 17 px
+    # 0. no text below the 15 px floor (brief 6 sets the locative line at 15)
     for it in ITEMS:
-        if it["kind"] == "text" and it["size"] is not None and it["size"] < 17:
-            raise SystemExit("text below the 17 px floor: %s at %d px" % (it["name"], it["size"]))
+        if it["kind"] == "text" and it["size"] is not None and it["size"] < MIN_TEXT:
+            raise SystemExit("text below the %d px floor: %s at %d px"
+                             % (MIN_TEXT, it["name"], it["size"]))
 
     # 1. every box sits inside the 26 px edge margin
     for it in ITEMS:
@@ -764,7 +1020,9 @@ def count_collisions():
     return sum(1 for a, b in pairs_checked() if _overlap(a["box"], b["box"]))
 
 
-def smallest_gap():
+def smallest_gap(with_type=True):
+    """The tightest gap on the page. with_type=True counts only pairs that involve a text block;
+    two rules that meet at a T-junction are a join, not a spacing measurement."""
     best = (None, None, 1e9)
     for i, a in enumerate(ITEMS):
         for b in ITEMS[i + 1:]:
@@ -773,6 +1031,8 @@ def smallest_gap():
                 if _inside(other["box"], cont["box"]):
                     continue
             if a["kind"] == "container" and b["kind"] == "container":
+                continue
+            if with_type and not (a["kind"] == "text" or b["kind"] == "text"):
                 continue
             if _overlap(a["box"], b["box"]):
                 continue
@@ -796,6 +1056,17 @@ def ink_pixels(img, box, thresh=30):
     return n
 
 
+def ink_frac(img, box, delta=8):
+    """
+    The brief's own measure: the fraction of pixels that differ from the paper colour by more than
+    `delta` in ANY channel.
+    """
+    x0, y0, x1, y1 = (int(round(v)) for v in box)
+    crop = np.asarray(img.crop((x0, y0, x1, y1)).convert("RGB"), dtype=np.int16)
+    d = np.abs(crop - np.array(PAPER, dtype=np.int16)).max(axis=2)
+    return float((d > delta).sum()) / float(d.size)
+
+
 def ink_extent(img, box, thresh=30):
     """Bounding box of the ink actually laid down inside box, or None if the box is empty paper."""
     x0, y0, x1, y1 = (int(round(v)) for v in box)
@@ -814,15 +1085,34 @@ def ink_extent(img, box, thresh=30):
     return (cols[0], rows[0], cols[-1], rows[-1])
 
 
-def cell_rect(idx):
+def panel_tones(img, box=None, bucket=12, floor_frac=0.002):
     """
-    (x, y, width, height) of grid cell `idx`: the first three share the top row at one third of the
-    measure each; the last two share the foot row at half the content width less the gutter.
+    Distinct tones in the lead panel: unique luma buckets, and how many of them carry at least
+    `floor_frac` of the panel (a bucket with a handful of grain pixels is not a tone).
     """
-    if idx < TOP_COLS:
-        return (GRID_X0 + idx * (TOP_CELL_W + GUTTER), GRID_TOP, TOP_CELL_W, CELL_H)
-    j = idx - TOP_COLS
-    return (X0 + j * (BOT_CELL_W + GUTTER), GRID_TOP + CELL_H + GUTTER, BOT_CELL_W, CELL_H)
+    box = PANEL if box is None else box
+    x0, y0, x1, y1 = (int(round(v)) for v in box)
+    arr = np.asarray(img.crop((x0, y0, x1, y1)).convert("L"), dtype=np.int32)
+    q = arr // bucket
+    uniq, counts = np.unique(q, return_counts=True)
+    solid = int((counts >= floor_frac * q.size).sum())
+    return int(len(uniq)), solid
+
+
+def max_empty_gap(img, box, delta=8):
+    """
+    The largest run of consecutive empty rows inside box — the brief's density test ("no gap larger
+    than about 40 px inside the content area"). The lead panel is excluded by the caller.
+    """
+    x0, y0, x1, y1 = (int(round(v)) for v in box)
+    arr = np.asarray(img.crop((x0, y0, x1, y1)).convert("RGB"), dtype=np.int16)
+    d = np.abs(arr - np.array(PAPER, dtype=np.int16)).max(axis=2)
+    rows = (d > delta).sum(axis=1)
+    best = run = 0
+    for n in rows:
+        run = run + 1 if n == 0 else 0
+        best = max(best, run)
+    return best
 
 
 def check_labels():
@@ -835,18 +1125,18 @@ def check_labels():
         cx, cy, cw, ch = cell_rect(idx)
         cells[story["icon"]] = (cx, cy, cx + cw, cy + ch)
 
-    labs = [it for it in ITEMS if it["name"].startswith(("label:", "tag:"))]
+    labs = [it for it in ITEMS if it["name"].startswith(("label:", "tag:", "teaser:"))]
 
     for it in labs:
         b = it["box"]
         if b[0] < X0 - 0.5 or b[2] > X1 + 0.5:
             raise SystemExit("label crosses the content box: %s spans x %.1f -> %.1f (box %d..%d)"
                              % (it["name"], b[0], b[2], X0, X1))
-        if it["name"].startswith("label:"):
+        if it["name"].startswith(("label:", "teaser:")):
             icon = it["name"].split(":")[1]
             right = cells[icon][2]
             if b[2] > right + 0.5:
-                raise SystemExit("label overruns its cell: %s right edge %.1f > cell right %d"
+                raise SystemExit("%s overruns its cell: right edge %.1f > cell right %d"
                                  % (it["name"], b[2], right))
 
     for i, a in enumerate(labs):
@@ -901,127 +1191,187 @@ def main():
     for name, (y, h) in [
         ("top rule", BAND_TOP_RULE),
         ("masthead", BAND_MASTHEAD),
-        ("hairline", BAND_MAST_RULE),
+        ("mast rule", BAND_MAST_RULE),
         ("date bar", BAND_DATEBAR),
         ("kicker row", BAND_KICKER),
         ("hairline", BAND_KICK_RULE),
         ("lead band", BAND_LEAD),
         ("brief grid", BAND_GRID),
-        ("footer strip", BAND_FOOTER),
+        ("footer", BAND_FOOTER),
     ]:
         print("  %-14s y=%4d  h=%3d   ends %4d" % (name, y, h, y + h))
 
     print("\nLEAD BAND")
-    print("  panel             x %d -> %d, y %d -> %d  (%d x %d)"
+    print("  panel             x %d -> %d, y %d -> %d  (%d x %d, was 960 x 228)"
           % (PANEL[0], PANEL[2], PANEL[1], PANEL[3], PANEL[2] - PANEL[0], PANEL[3] - PANEL[1]))
     for it in ITEMS:
-        if it["name"] in ("lead_l1", "lead_l2", "standfirst"):
+        if it["name"] in ("locative", "lead_l1", "lead_l2", "deck"):
             b = it["box"]
-            print("  %-12s ink %6.1f wide, right edge %6.1f, y %4.0f -> %4.0f"
-                  % (it["name"], b[2] - b[0], b[2], b[1], b[3]))
+            print("  %-12s %-14s %3d px  ink %6.1f wide, right edge %6.1f, y %4.0f -> %4.0f"
+                  % (it["name"], it["face"], it["size"], b[2] - b[0], b[2], b[1], b[3]))
 
-    print("\nGRID  (3 across the top at %d, 2 across the foot at %d, gutter %d, cell h %d)"
-          % (TOP_CELL_W, BOT_CELL_W, GUTTER, CELL_H))
-    print("  top row   x %d -> %d   (%d + %d + %d + 2 x %d)"
-          % (GRID_X0, GRID_X0 + TOP_COLS * TOP_CELL_W + (TOP_COLS - 1) * GUTTER,
-             TOP_CELL_W, TOP_CELL_W, TOP_CELL_W, GUTTER))
-    print("  foot row  x %d -> %d   (%d + %d + %d)"
-          % (X0, X0 + BOT_COLS * BOT_CELL_W + (BOT_COLS - 1) * GUTTER,
-             BOT_CELL_W, BOT_CELL_W, GUTTER))
+    print("\nGRID  (4-unit measure: cell 0 spans 2 units at %d, the rest at %d, gutter %d, cell h %d)"
+          % (SPAN_W, COL_W, GUTTER, CELL_H))
+    print("  top row   x %d -> %d   (%d + %d + %d)"
+          % (GRID_X0, GRID_X0 + 3 * COL_W + 2 * GUTTER, SPAN_W, GUTTER, COL_W))
+    print("  foot row  x %d -> %d   (%d + %d + %d + 2 x %d)"
+          % (GRID_X0, GRID_X0 + 3 * COL_W + 2 * GUTTER, COL_W, COL_W, COL_W, GUTTER))
     for idx, story in enumerate(GRID_STORIES):
         cx, cy, cw, ch = cell_rect(idx)
-        row = "top" if idx < TOP_COLS else "foot"
-        print("  %-4s cell x %3d -> %3d  y %3d -> %3d  (%3d x %d)   %s / %s"
-              % (row, cx, cx + cw, cy, cy + ch, cw, ch, story["tag"], story["icon"]))
+        row = "top" if idx < 2 else "foot"
+        print("  %-4s cell x %3d -> %3d  y %3d -> %3d  (%3d x %d)   %-15s %s  label %d px"
+              % (row, cx, cx + cw, cy, cy + ch, cw, ch, story["tag"], story["icon"],
+                 34 if idx == 0 else 30))
 
-    print("\nPICTOGRAMS  (ink pixels inside the 54x54 box — floor 300)")
+    print("\nPICTOGRAMS  (ink pixels inside the %d x %d box — floor 90)" % (ICON, ICON))
     for idx, story in enumerate(GRID_STORIES):
         cx, cy, cw, ch = cell_rect(idx)
         ibox = (cx, cy, cx + ICON, cy + ICON)
         n = ink_pixels(img, ibox)
-        if n < 300:
-            raise SystemExit("pictogram %r has only %d ink px inside %s (floor 300)"
+        if n < 90:
+            raise SystemExit("pictogram %r has only %d ink px inside %s (floor 90)"
                              % (story["icon"], n, ibox))
         print("  %-6s box x %3d -> %3d  y %3d -> %3d   ink %4d px   %s"
               % (story["icon"], ibox[0], ibox[2], ibox[1], ibox[3], n, story["tag"]))
 
     labs = check_labels()
     gap = smallest_label_gap(labs)
-    print("\nLABELS  (ink width, right edge, cell right edge, clearance)")
+    print("\nCELL TYPE  (label lines, teasers, cell right edge, clearance)")
     for idx, story in enumerate(GRID_STORIES):
         cx, cy, cw, ch = cell_rect(idx)
         for it in labs:
-            if not it["name"].startswith("label:%s:" % story["icon"]):
+            if not (it["name"].startswith("label:%s:" % story["icon"])
+                    or it["name"] == "teaser:%s" % story["icon"]):
                 continue
             b = it["box"]
-            print("  %-16s %6.1f wide  right %6.1f  cell right %3d  clear %5.1f  ink h %4.1f"
-                  % (it["name"], b[2] - b[0], b[2], cx + cw, cx + cw - b[2], b[3] - b[1]))
+            print("  %-18s %2d px  %6.1f wide  right %6.1f  cell right %3d  clear %5.1f"
+                  % (it["name"], it["size"], b[2] - b[0], b[2], cx + cw, cx + cw - b[2]))
     for it in labs:
         if it["name"].startswith("tag:"):
             b = it["box"]
-            print("  %-16s %6.1f wide  right %6.1f  (region tag, Ubuntu Mono 17)"
-                  % (it["name"], b[2] - b[0], b[2]))
-    n_coll = count_collisions()
-    print("  labels/tags       %d measured, 0 crossing the content box, %d collisions"
-          % (len(labs), n_coll))
-    if n_coll:
-        raise SystemExit("%d colliding pair(s) on the page" % n_coll)
-    print("  smallest label gap %.1f px  between %s and %s" % (gap[2], gap[0], gap[1]))
+            print("  %-18s %2d px  %6.1f wide  right %6.1f  (region tag)"
+                  % (it["name"], it["size"], b[2] - b[0], b[2]))
+    print("  smallest cell-text gap %.1f px  between %s and %s" % (gap[2], gap[0], gap[1]))
 
-    print("\nLEAD  (ink width, right edge, content right edge)")
-    for it in ITEMS:
-        if it["name"] in ("lead_l1", "lead_l2", "standfirst", "kicker_left", "kicker_right"):
-            b = it["box"]
-            print("  %-12s %6.1f wide  right %6.1f  clear %5.1f"
-                  % (it["name"], b[2] - b[0], b[2], X1 - b[2]))
+    # ---- the brief's checklist, in its own order ---------------------------------------
+    print("\n[1] TEXT BLOCKS — width, right edge, and the 26 px edge margin")
+    texts = sorted([it for it in ITEMS if it["kind"] == "text"], key=lambda i: (i["box"][1], i["box"][0]))
+    worst_right = 0.0
+    worst_left = 1e9
+    for it in texts:
+        b = it["box"]
+        worst_right = max(worst_right, b[2])
+        worst_left = min(worst_left, b[0])
+        print("  %-18s %-14s %2d px  x %6.1f -> %6.1f  (%6.1f wide)  y %4.0f -> %4.0f"
+              % (it["name"], it["face"] or "-", it["size"], b[0], b[2], b[2] - b[0], b[1], b[3]))
+    print("  %d text blocks: leftmost %.1f, rightmost %.1f, limit %d .. %d  -> %s"
+          % (len(texts), worst_left, worst_right, EDGE, PAGE - EDGE,
+             "PASS" if (worst_left >= EDGE and worst_right <= PAGE - EDGE) else "FAIL"))
+    if worst_left < EDGE or worst_right > PAGE - EDGE:
+        raise SystemExit("a text block crosses the %d px edge margin" % EDGE)
 
-    pext = ink_extent(img, PANEL)
-    if pext is None:
-        raise SystemExit("the lead panel drew nothing inside %r" % (PANEL,))
-    l1 = next(it["box"] for it in ITEMS if it["name"] == "lead_l1")
-    print("  panel ink         y %d -> %d inside its %d x %d slot; headline ink starts y %.0f"
-          % (pext[1], pext[3], PANEL[2] - PANEL[0], PANEL[3] - PANEL[1], l1[1]))
-    print("  panel to head     %.0f px of real air (the slot's empty foot, not a collision)"
-          % (l1[1] - pext[3]))
+    print("\n[2] INK COVERAGE  (pixels differing from paper by more than 8 in any channel)")
+    whole = ink_frac(img, (0, 0, PAGE, PAGE))
+    content = ink_frac(img, (X0, BAND_TOP_RULE[0], X1, FOOT_BAR[3]))
+    grid = ink_frac(img, (X0, GRID_TOP, X1, GRID_TOP + 2 * CELL_H + GUTTER))
+    panel = ink_frac(img, PANEL)
+    print("  whole page         %6.2f %%  of 1024 x 1024" % (100 * whole))
+    print("  content area       %6.2f %%  of x %d..%d, y %d..%d"
+          % (100 * content, X0, X1, BAND_TOP_RULE[0], FOOT_BAR[3]))
+    print("  grid band          %6.2f %%  of x %d..%d, y %d..%d   (floor 22 %%)"
+          % (100 * grid, X0, X1, GRID_TOP, GRID_TOP + 2 * CELL_H + GUTTER))
+    print("  lead panel         %6.2f %%  (the picture, not furniture)" % (100 * panel))
+    if grid < 0.22:
+        raise SystemExit("grid band only %.2f %% inked (floor 22 %%)" % (100 * grid))
+    print("  grid band          PASS at the 22 %% floor")
 
-    def probe(nm):
-        for it in ITEMS:
-            if it["name"] == nm:
-                return it["size"], it["box"][3] - it["box"][1]
-        return None, None
+    print("\n[3] COLLISIONS  (overlapping text/rule boxes)")
+    print("  pairs checked      %d" % len(pairs_checked()))
+    print("  collisions         %d" % count_collisions())
+    if count_collisions():
+        raise SystemExit("%d colliding pair(s) on the page" % count_collisions())
+
+    print("\n[4] TONES IN THE LEAD PANEL  (unique luma buckets, width 12)")
+    uniq, solid = panel_tones(img)
+    print("  buckets present    %d" % uniq)
+    print("  buckets >= 0.2 %%    %d   (floor 6)" % solid)
+    if solid < 6:
+        raise SystemExit("lead panel has only %d solid tones (floor 6)" % solid)
+    print("  lead panel         PASS at the 6-tone floor")
+
+    print("\n[5] DENSITY  (largest run of empty rows inside the content area)")
+    gap_rows = max_empty_gap(img, (X0, BAND_TOP_RULE[0], X1, FOOT_BAR[3]))
+    print("  largest gap        %d px of bare paper   (target: about 40 px or less)" % gap_rows)
+
+    print("\n[6] FURNITURE  (every element brief 6 fault 2 asks for)")
+    furn = [
+        ("deck under the lead", "deck", "serif 30, one line"),
+        ("teasers under cells", "teaser:", "%d at 16 px mono" % len(GRID_STORIES)),
+        ("index strip", "index:head", "INSIDE + %d sections" % len(INDEX_SECTIONS)),
+        ("weather box", "weather_box", "%d cities, condition words only" % len(WEATHER_ROWS_TEXT)),
+        ("gutter rules", "rule:gutter", "vertical, between cells"),
+        ("row rule", "rule:grid_mid", "horizontal, between rows"),
+        ("locative line", "locative", "mono 15, tracked"),
+    ]
+    for label, key, note in furn:
+        hit = [it for it in ITEMS if it["name"] == key or it["name"].startswith(key)]
+        if hit:
+            b = (min(i["box"][0] for i in hit), min(i["box"][1] for i in hit),
+                 max(i["box"][2] for i in hit), max(i["box"][3] for i in hit))
+        else:
+            b = (0, 0, 0, 0)
+        print("  %-20s %-34s box x %3.0f -> %3.0f  y %3.0f -> %3.0f"
+              % (label, note, b[0], b[2], b[1], b[3]))
+
+    print("  honesty            weather box draws condition words only: facts.md holds no"
+          " temperature, and a false figure costs criterion 4")
 
     print("\nTYPE  (face, size, ink height) — measured, not asserted")
     for face, nm, note in [
         ("DejaVu Serif Bold", "masthead", "masthead"),
         ("Anton", "date", "date bar"),
         ("Ubuntu Mono", "kicker_left", "kicker"),
+        ("Ubuntu Mono", "locative", "locative"),
         ("Anton", "lead_l1", "lead headline"),
-        ("Inter Medium", "standfirst", "standfirst"),
+        ("DejaVu Serif", "deck", "deck"),
+        ("Anton", "label:unsc:1", "second lead"),
+        ("Anton", "label:addis:1", "grid labels"),
         ("Ubuntu Mono", "tag:UNITED_NATIONS", "region tags"),
-        ("Anton", "label:unsc:1", "grid labels"),
-        ("Inter", "foot_line", "footer line"),
+        ("Ubuntu Mono", "teaser:unsc", "teasers"),
         ("Ubuntu Mono", "foot_bar_text", "footer bar"),
     ]:
-        size, ink = probe(nm)
-        print("  %-18s %3s px   ink %5.1f px   %s" % (face, size, ink, note))
-    print("  smallest face     %d px — floor is 17 px"
-          % min(it["size"] for it in ITEMS if it["kind"] == "text" and it["size"]))
-    print("  judge-critical    lead 50 / labels 30 / date 38 (all >= 30 px as specified)")
+        it = next((i for i in ITEMS if i["name"] == nm), None)
+        if it is None:
+            print("  %-18s %3s px   ink     -   %s (missing)" % (face, "?", note))
+            continue
+        print("  %-18s %3d px   ink %5.1f px   %s"
+              % (face, it["size"], it["box"][3] - it["box"][1], note))
+    print("  smallest face     %d px — floor is %d px"
+          % (min(it["size"] for it in ITEMS if it["kind"] == "text" and it["size"]), MIN_TEXT))
+    print("  ladder            mast rule %d px > cell/gutter rules 1 px; lead 50 / cell 34 / cell 30"
+          % BAND_MAST_RULE[1])
 
     gaps = smallest_gap()
+    allg = smallest_gap(with_type=False)
     print("\nSPACING")
-    print("  smallest gap      %.1f px  between %s and %s" % (gaps[2], gaps[0], gaps[1]))
+    print("  smallest type gap %.1f px  between %s and %s" % (gaps[2], gaps[0], gaps[1]))
+    print("  tightest any pair %.1f px  between %s and %s (rules meet at T-junctions)"
+          % (allg[2], allg[0], allg[1]))
     print("  edge margin       %d px, nothing outside x %d..%d / y %d..%d"
           % (EDGE, EDGE, PAGE - EDGE, EDGE, PAGE - EDGE))
-    print("  pairs checked     %d" % len(pairs_checked()))
-    print("  collisions        %d" % count_collisions())
+
+    pext = ink_extent(img, PANEL)
+    if pext is None:
+        raise SystemExit("the lead panel drew nothing inside %r" % (PANEL,))
+    print("  panel ink         y %d -> %d inside its %d x %d slot"
+          % (pext[1], pext[3], PANEL[2] - PANEL[0], PANEL[3] - PANEL[1]))
 
     print("\nFILE")
     print("  %s" % os.path.abspath(out))
     print("  bytes             %d  (cap 1048576, %s)"
           % (size_bytes, "ok" if size_bytes <= 1048576 else "OVER"))
     print("  md5               %s" % md5_of(out))
-    print("  stories           %d in STORIES: %d grid + lead + standfirst"
+    print("  stories           %d in STORIES: %d grid + lead + deck"
           % (len(STORIES), len(GRID_STORIES)))
     print("  fields            %s" % ", ".join(s["tag"] for s in GRID_STORIES))
 
@@ -1033,6 +1383,17 @@ def main():
         path = os.path.join(here, "preview_%d.png" % px)
         prev.save(path, "PNG", optimize=True)
         print("  preview_%d.png   %6d bytes   %d x %d" % (px, os.path.getsize(path), px, px))
+
+    # ---- the two crops, so each can be looked at on its own ------------------------------
+    print("\nCROPS")
+    for name, box in (("panel.png", PANEL),
+                      ("grid.png", (X0, GRID_TOP, X1, GRID_TOP + 2 * CELL_H + GUTTER))):
+        crop = img.crop(tuple(int(round(v)) for v in box))
+        path = os.path.join(here, name)
+        crop.save(path, "PNG", optimize=True)
+        print("  %-12s %6d bytes   %d x %d   from y %d -> %d"
+              % (name, os.path.getsize(path), crop.size[0], crop.size[1],
+                 int(box[1]), int(box[3])))
 
     # ---- the gate ----------------------------------------------------------------------
     with open(out, "rb") as fh:
